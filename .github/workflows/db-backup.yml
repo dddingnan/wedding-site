@@ -1,0 +1,50 @@
+name: DB backup
+
+# Weekly pg_dump of the production database, kept as a private workflow artifact.
+# Requires repo secret NEON_DATABASE_URL (Settings → Secrets and variables → Actions).
+#
+# Restore:  pg_restore --clean --no-owner -d "$DATABASE_URL" wedding-YYYY-MM-DD.dump
+# Note: anyone with read access to this repo's Actions can download the artifact.
+# Keep the repo private.
+
+on:
+  schedule:
+    - cron: "17 8 * * 1" # Mondays 08:17 UTC
+  workflow_dispatch: # "Run workflow" button for a manual backup
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check secret
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          if [ -z "$NEON_DATABASE_URL" ]; then
+            echo "::notice::NEON_DATABASE_URL secret not set yet; skipping backup."
+            echo "SKIP=1" >> "$GITHUB_ENV"
+          fi
+
+      - name: Install pg_dump 17
+        if: env.SKIP != '1'
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-17
+
+      - name: Dump
+        if: env.SKIP != '1'
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          /usr/lib/postgresql/17/bin/pg_dump "$NEON_DATABASE_URL" --format=custom --no-owner \
+            --file "wedding-$(date -u +%F).dump"
+          ls -lh wedding-*.dump
+
+      - uses: actions/upload-artifact@v4
+        if: env.SKIP != '1'
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: wedding-*.dump
+          retention-days: 90

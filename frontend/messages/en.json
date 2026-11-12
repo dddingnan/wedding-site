@@ -1,0 +1,87 @@
+{
+  "meta": {
+    "title": "Dingnan & Hyang — We're getting married",
+    "description": "Join us to celebrate our wedding. Details, schedule and RSVP."
+  },
+  "nav": {
+    "home": "Home",
+    "rsvp": "RSVP",
+    "faq": "FAQ",
+    "language": "Language"
+  },
+  "home": {
+    "names": "Dingnan & Hyang",
+    "tagline": "We're getting married",
+    "intro": "We would be honored to have you celebrate with us.",
+    "countdownLabel": "Until the first ceremony",
+    "days": "Days",
+    "hours": "Hours",
+    "minutes": "Minutes",
+    "seconds": "Seconds",
+    "eventsTitle": "Celebrations",
+    "rsvpCta": "RSVP now",
+    "rsvpBy": "Please reply by {date}"
+  },
+  "events": {
+    "korea": {
+      "title": "Wedding Ceremony in Korea",
+      "place": "Venue to be announced"
+    },
+    "second": {
+      "title": "Second Celebration",
+      "place": "Venue to be announced"
+    },
+    "time": "{date} · {time}",
+    "map": "Open map"
+  },
+  "rsvp": {
+    "title": "RSVP",
+    "codePrompt": "Enter the invitation code printed on your card.",
+    "codeLabel": "Invitation code",
+    "codePlaceholder": "e.g. AB3K9Q",
+    "find": "Find my invitation",
+    "finding": "Looking…",
+    "notFound": "We couldn't find that code. Please check it and try again.",
+    "tooMany": "Too many attempts. Please wait a minute and try again.",
+    "error": "Something went wrong. Please try again.",
+    "greeting": "Welcome, {name}!",
+    "intro": "Please let us know who can join each celebration.",
+    "attending": "Joyfully accepts",
+    "declining": "Regretfully declines",
+    "plusOneName": "Guest name",
+    "plusOnePlaceholder": "Name of your guest",
+    "meal": "Meal",
+    "mealPlaceholder": "Choose a meal",
+    "dietary": "Allergies or dietary needs",
+    "note": "A message for us (or a song request!)",
+    "submit": "Send RSVP",
+    "submitting": "Sending…",
+    "chooseAll": "Please answer for every guest.",
+    "thanks": "Thank you! Your RSVP has been saved.",
+    "thanksDetail": "You can come back with the same code to change your answer anytime before the deadline.",
+    "edit": "Edit my RSVP",
+    "lastUpdated": "Last updated {date}"
+  },
+  "meals": {
+    "beef": "Beef",
+    "fish": "Fish",
+    "vegetarian": "Vegetarian",
+    "kids": "Kids' meal"
+  },
+  "faq": {
+    "title": "Questions & Answers",
+    "q1": "Can I bring a guest?",
+    "a1": "Your invitation lists everyone included. If it has a guest slot, you'll see it when you RSVP.",
+    "q2": "Are children welcome?",
+    "a2": "Yes! Children named on your invitation are very welcome.",
+    "q3": "What should I wear?",
+    "a3": "Semi-formal. Wear whatever makes you feel celebratory.",
+    "q4": "Can I change my RSVP?",
+    "a4": "Yes. Use the same invitation code to update your answer any time before the deadline.",
+    "q5": "Who do I contact with questions?",
+    "a5": "Reach out to either of us directly. We're happy to help."
+  },
+  "footer": {
+    "madeWith": "Made with love by the two of us"
+  }
+}
