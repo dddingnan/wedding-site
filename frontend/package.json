@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "gen:api": "cd ../backend && uv run python -c \"import json;from app.main import app;print(json.dumps(app.openapi()))\" > ../frontend/openapi.json && cd ../frontend && openapi-typescript openapi.json -o src/lib/api-types.ts && rm openapi.json",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
