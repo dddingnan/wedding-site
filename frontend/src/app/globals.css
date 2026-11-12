@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #faf6ef;
+  --card: #ffffff;
+  --ink: #2c2724;
+  --muted: #7a6f66;
+  --line: #e7ddd0;
+  --accent: #9c7a4d;
+  --accent-ink: #ffffff;
+  --danger: #b4483c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #1b1816;
+    --card: #24201d;
+    --ink: #f1ebe3;
+    --muted: #b3a89c;
+    --line: #3a332d;
+    --accent: #c9a671;
+    --accent-ink: #1b1816;
+    --danger: #e0786b;
+  }
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-danger: var(--danger);
+  --font-display: "Cormorant Garamond", var(--cjk), serif;
+  --font-sans: "Inter Variable", var(--cjk), system-ui, sans-serif;
+}
+
+/* Han characters render differently in Traditional Chinese vs Korean fonts,
+   so put the matching CJK font first for each language. */
+html {
+  --cjk: "Noto Sans TC", "Noto Sans KR";
+}
+html[lang="ko"] {
+  --cjk: "Noto Sans KR", "Noto Sans TC";
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Korean reads better without breaking words mid-syllable-block. */
+html[lang="ko"] body {
+  word-break: keep-all;
+}

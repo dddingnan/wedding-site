@@ -1,0 +1,87 @@
+{
+  "meta": {
+    "title": "Dingnan & Hyang — 我們要結婚了",
+    "description": "誠摯邀請您一同見證我們的婚禮。婚禮資訊、流程與出席回覆。"
+  },
+  "nav": {
+    "home": "首頁",
+    "rsvp": "出席回覆",
+    "faq": "常見問題",
+    "language": "語言"
+  },
+  "home": {
+    "names": "Dingnan & Hyang",
+    "tagline": "我們要結婚了",
+    "intro": "誠摯邀請您與我們一同分享這份喜悅。",
+    "countdownLabel": "距離第一場婚禮",
+    "days": "天",
+    "hours": "時",
+    "minutes": "分",
+    "seconds": "秒",
+    "eventsTitle": "婚禮場次",
+    "rsvpCta": "立即回覆",
+    "rsvpBy": "敬請於 {date} 前回覆"
+  },
+  "events": {
+    "korea": {
+      "title": "韓國婚禮",
+      "place": "場地資訊即將公布"
+    },
+    "second": {
+      "title": "第二場婚宴",
+      "place": "場地資訊即將公布"
+    },
+    "time": "{date} · {time}",
+    "map": "開啟地圖"
+  },
+  "rsvp": {
+    "title": "出席回覆",
+    "codePrompt": "請輸入喜帖上的邀請碼。",
+    "codeLabel": "邀請碼",
+    "codePlaceholder": "例如 AB3K9Q",
+    "find": "查詢我的邀請",
+    "finding": "查詢中…",
+    "notFound": "找不到這組邀請碼，請確認後再試一次。",
+    "tooMany": "嘗試次數過多，請稍候一分鐘再試。",
+    "error": "發生錯誤，請再試一次。",
+    "greeting": "{name}，歡迎您！",
+    "intro": "請告訴我們每位賓客可以出席哪些場次。",
+    "attending": "欣然出席",
+    "declining": "遺憾無法出席",
+    "plusOneName": "同行賓客姓名",
+    "plusOnePlaceholder": "請填寫同行賓客姓名",
+    "meal": "餐點",
+    "mealPlaceholder": "請選擇餐點",
+    "dietary": "過敏或飲食需求",
+    "note": "想對我們說的話（或點一首歌！）",
+    "submit": "送出回覆",
+    "submitting": "送出中…",
+    "chooseAll": "請為每位賓客選擇是否出席。",
+    "thanks": "謝謝您！已收到您的回覆。",
+    "thanksDetail": "截止日前，您可以隨時用同一組邀請碼修改回覆。",
+    "edit": "修改我的回覆",
+    "lastUpdated": "最後更新：{date}"
+  },
+  "meals": {
+    "beef": "牛肉",
+    "fish": "魚",
+    "vegetarian": "素食",
+    "kids": "兒童餐"
+  },
+  "faq": {
+    "title": "常見問題",
+    "q1": "可以攜伴參加嗎？",
+    "a1": "喜帖上已列出受邀的每位賓客。若有攜伴名額，回覆時會看到同行賓客欄位。",
+    "q2": "可以帶小朋友嗎？",
+    "a2": "當然可以！喜帖上列名的小朋友都非常歡迎。",
+    "q3": "服裝要求？",
+    "a3": "半正式服裝即可，穿上讓您感到開心喜氣的衣服就好。",
+    "q4": "回覆後可以修改嗎？",
+    "a4": "可以。截止日前，使用同一組邀請碼即可隨時更新回覆。",
+    "q5": "有問題要聯絡誰？",
+    "a5": "歡迎直接聯絡我們任何一位，我們很樂意協助。"
+  },
+  "footer": {
+    "madeWith": "由我們兩人用心製作"
+  }
+}
