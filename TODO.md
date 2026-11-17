@@ -9,16 +9,30 @@
 
 ===
 
+### Invite Flow
+- Based on user id, generating the QR code / link
+- Click the link 
+- Direct got to the user flow
+
 ### User Flow
 - Not sure how to cooperate the pull invitation animation with the input.
 - Input the name, it should show the search suggest, just three results maximum
 - Choose the user name
+- Input how many people they allow to bring, what they want to eat veggie?, does their animal born match with the chicken, mouse or dragon.
 - Show the detail, when, where, which table.
 - Send the email / calendar invite?
-
 
 ### Admin Flow
 - Should be inside the different path
 - Shows the input to requst username and password
 - Should have different functionality that setup what user should seat what table and how many people they can bring
 - Use Google login is more safe?
+
+### Manager Flow
+- During the wedding
+- Allow the user to check in
+- Two ways to check-in
+    - one scan QR code - input user name - done
+    - two manager check in for them
+- Should be able to see if the user receive the gift and speical gift because of animal born
+- When check-in, should be able to input how much the user provide the money
