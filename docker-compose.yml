@@ -1,5 +1,7 @@
-# Local development: Postgres + API in Docker, frontend with `npm run dev`.
-#   docker compose up --build
+# Everything in Docker (production build of the UI, no hot reload):
+#   docker compose up --build      -> http://localhost:3000
+# Day-to-day frontend work with hot reload: run only DB + API here, UI on the host.
+#   docker compose up --build db api
 #   cd frontend && npm run dev     -> http://localhost:3000
 services:
   db:
@@ -27,6 +29,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports: ["3000:3000"]
+    depends_on: [api]
 
 volumes:
   pgdata:

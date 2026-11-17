@@ -20,10 +20,25 @@ Wedding invitation site for Dingnan & Hyang — two ceremonies, three languages 
 
 Prereqs: Docker, Node 22, [uv](https://docs.astral.sh/uv/).
 
+### Everything in Docker
+
+DB, API and a production build of the UI. No hot reload, so this is for trying the whole site, not for editing the frontend.
+
 ```bash
-# 1. Database + API (runs migrations automatically)
 cp backend/.env.example backend/.env
-docker compose up --build -d
+docker compose up --build -d        # UI http://localhost:3000, API http://localhost:8000
+docker compose exec api python -m scripts.seed_events
+docker compose exec api python -m scripts.import_guests scripts/guests.example.csv   # prints invite codes
+```
+
+After changing frontend code, rebuild with `docker compose up --build -d web`. Stop it all with `docker compose down` (add `-v` to wipe the database).
+
+### Frontend with hot reload
+
+```bash
+# 1. Database + API only (runs migrations automatically)
+cp backend/.env.example backend/.env
+docker compose up --build -d db api
 
 # 2. Seed the two ceremonies and some example guests
 cd backend
