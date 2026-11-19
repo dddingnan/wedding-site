@@ -50,33 +50,44 @@ def admin_headers(client):
 def events(client, admin_headers):
     """Two ceremonies, like the real wedding."""
     created = []
-    for slug, starts_at, tz, theme in [
-        ("korea", "2027-12-26T12:00:00+09:00", "Asia/Seoul", "gold"),
-        ("taiwan", "2028-01-02T12:00:00+08:00", "Asia/Taipei", "red"),
+    for slug, starts_at, tz, theme, zodiacs in [
+        ("korea", "2027-12-26T12:00:00+09:00", "Asia/Seoul", "gold", ["rooster", "rat"]),
+        ("taiwan", "2028-01-02T12:00:00+08:00", "Asia/Taipei", "red", ["dragon", "rat"]),
     ]:
         res = client.post(
             "/api/admin/events",
             headers=admin_headers,
-            json={"slug": slug, "starts_at": starts_at, "timezone": tz, "theme": theme},
+            json={
+                "slug": slug,
+                "starts_at": starts_at,
+                "timezone": tz,
+                "theme": theme,
+                "gift_zodiacs": zodiacs,
+            },
         )
         assert res.status_code == 201
         created.append(res.json())
     return created
 
 
+def make_household(client, headers, **fields):
+    body = {"name": "Household", "primary_event": "korea", **fields}
+    res = client.post("/api/admin/households", headers=headers, json=body)
+    assert res.status_code == 201, res.text
+    return res.json()
+
+
 @pytest.fixture
 def household(client, admin_headers, events):
-    res = client.post(
-        "/api/admin/households",
-        headers=admin_headers,
-        json={
-            "name": "The Kim Family",
-            "preferred_language": "ko",
-            "guests": [
-                {"full_name": "Minji Kim"},
-                {"full_name": "Guest", "is_plus_one": True},
-            ],
-        },
+    """Kim Family: main event Korea, also invited to Taiwan, up to 3 people."""
+    return make_household(
+        client,
+        admin_headers,
+        name="Kim Family",
+        contact_first_name="Minji",
+        contact_last_name="Kim",
+        preferred_language="ko",
+        max_guests=3,
+        primary_event="korea",
+        other_events=["taiwan"],
     )
-    assert res.status_code == 201
-    return res.json()

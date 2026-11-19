@@ -1,3 +1,5 @@
+from tests.conftest import make_household
+
 MEMORY = {
     "slug": "us",
     "kind": "memory",
@@ -41,32 +43,31 @@ def test_hotels_keep_order_and_reach_guests(client, admin_headers):
         "Lotte Hotel Seoul",
     ]
 
-    household = client.post(
-        "/api/admin/households",
-        headers=admin_headers,
-        json={"name": "A", "guests": [{"full_name": "A"}]},
-    ).json()
+    household = make_household(client, admin_headers, name="A")
     lookup = client.post("/api/invites/lookup", json={"code": household["invite_code"]}).json()
     hotels = lookup["events"][0]["hotels"]
     assert hotels[0]["booking_code"] == "WED2027"
     assert hotels[1]["note"] == "5 min walk"
 
 
-def test_memory_event_not_invited_by_default(client, admin_headers, events):
-    assert client.post("/api/admin/events", headers=admin_headers, json=MEMORY).status_code == 201
-    household = client.post(
-        "/api/admin/households",
-        headers=admin_headers,
-        json={"name": "A", "guests": [{"full_name": "A"}]},
-    ).json()
-    assert [e["slug"] for e in household["events"]] == ["korea", "taiwan"]
+def test_invalid_gift_zodiac_rejected(client, admin_headers):
+    body = {
+        "slug": "x1",
+        "starts_at": "2027-12-26T12:00:00+09:00",
+        "timezone": "Asia/Seoul",
+        "gift_zodiacs": ["chicken"],  # the zodiac name is "rooster"
+    }
+    assert client.post("/api/admin/events", headers=admin_headers, json=body).status_code == 422
 
 
 def test_cannot_invite_to_memory_event(client, admin_headers, events):
-    client.post("/api/admin/events", headers=admin_headers, json=MEMORY)
-    body = {"name": "A", "guests": [{"full_name": "A"}], "event_slugs": ["korea", "us"]}
-    res = client.post("/api/admin/households", headers=admin_headers, json=body)
-    assert res.status_code == 422
+    assert client.post("/api/admin/events", headers=admin_headers, json=MEMORY).status_code == 201
+    for body in (
+        {"name": "A", "primary_event": "us"},
+        {"name": "A", "primary_event": "korea", "other_events": ["us"]},
+    ):
+        res = client.post("/api/admin/households", headers=admin_headers, json=body)
+        assert res.status_code == 422
 
 
 def test_summary_skips_memory_events(client, admin_headers, events):

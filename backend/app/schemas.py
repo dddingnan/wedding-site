@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -7,6 +7,11 @@ Language = Literal["en", "zh-TW", "ko"]
 Meal = Literal["beef", "fish", "vegetarian", "kids"]
 EventKind = Literal["upcoming", "memory"]
 EventTheme = Literal["gold", "red"]
+Zodiac = Literal[
+    "rat", "ox", "tiger", "rabbit", "dragon", "snake",
+    "horse", "goat", "monkey", "rooster", "dog", "pig",
+]  # fmt: skip
+Count = Annotated[int, Field(ge=0, le=100)]
 
 
 class ORM(BaseModel):
@@ -40,43 +45,45 @@ class EventOut(ORM):
     venue: str | None
     address: str | None
     map_url: str | None
+    gift_zodiacs: list[Zodiac]  # the RSVP asks how many people were born in these years
     hotels: list[HotelOut]
 
 
 class RsvpOut(ORM):
     event_id: int
     attending: bool
-    meal: Meal | None
+    party_size: int
+    meals: dict[Meal, int]
+    zodiacs: dict[Zodiac, int]
     dietary: str | None
-
-
-class GuestOut(ORM):
-    id: int
-    full_name: str
-    is_plus_one: bool
-    rsvps: list[RsvpOut]
 
 
 class HouseholdOut(ORM):
     name: str
+    contact_first_name: str | None
+    contact_last_name: str | None
     preferred_language: Language
+    max_guests: int
+    primary_event_id: int | None
     note: str | None
     responded_at: datetime | None
     events: list[EventOut]
-    guests: list[GuestOut]
+    rsvps: list[RsvpOut]
 
 
-class GuestResponse(BaseModel):
-    guest_id: int
+class EventResponse(BaseModel):
+    """The household's answer for one event."""
+
     event_id: int
     attending: bool
-    full_name: str | None = Field(default=None, max_length=200)  # only used for plus-ones
-    meal: Meal | None = None
+    party_size: int = Field(default=0, ge=0)  # people coming; ignored when not attending
+    meals: dict[Meal, Count] = {}  # must add up to party_size
+    zodiacs: dict[Zodiac, Count] = {}  # only the event's gift_zodiacs
     dietary: str | None = Field(default=None, max_length=500)
 
 
 class RsvpSubmit(BaseModel):
-    responses: list[GuestResponse] = Field(min_length=1)
+    responses: list[EventResponse] = Field(min_length=1)
     note: str | None = Field(default=None, max_length=2000)
 
 
@@ -111,39 +118,65 @@ class EventCreate(BaseModel):
     venue: str | None = None
     address: str | None = None
     map_url: str | None = None
+    capacity: int | None = Field(default=None, ge=1)  # None = no limit yet
+    gift_zodiacs: list[Zodiac] = []
     hotels: list[HotelCreate] = []
 
 
-class GuestCreate(BaseModel):
-    full_name: str = Field(max_length=200)
-    is_plus_one: bool = False
+class EventUpdate(BaseModel):
+    """Fields left out are unchanged."""
+
+    capacity: int | None = Field(default=None, ge=1)
+    gift_zodiacs: list[Zodiac] | None = None
+
+
+class EventAdminOut(EventOut):
+    capacity: int | None
 
 
 class HouseholdCreate(BaseModel):
-    name: str = Field(max_length=200)
+    name: str = Field(min_length=1, max_length=200)  # e.g. "Hsu Family"
+    contact_first_name: str | None = Field(default=None, max_length=100)
+    contact_last_name: str | None = Field(default=None, max_length=100)
     email: str | None = None
     preferred_language: Language = "en"
-    guests: list[GuestCreate] = Field(min_length=1)
+    max_guests: int = Field(default=1, ge=1, le=50)
+    primary_event: str  # slug of the main event; sets the invitation theme
+    other_events: list[str] = []  # also invited to these (slugs)
     invite_code: str | None = Field(default=None, min_length=4, max_length=32)
-    # None = invite to every upcoming event. Memory events can't be invited to.
-    event_slugs: list[str] | None = None
+
+
+class HouseholdUpdate(BaseModel):
+    """Fields left out are unchanged."""
+
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    contact_first_name: str | None = Field(default=None, max_length=100)
+    contact_last_name: str | None = Field(default=None, max_length=100)
+    email: str | None = None
+    preferred_language: Language | None = None
+    max_guests: int | None = Field(default=None, ge=1, le=50)
+    primary_event: str | None = None
+    other_events: list[str] | None = None
 
 
 class HouseholdAdminOut(HouseholdOut):
     id: int
     invite_code: str
     email: str | None
-    max_guests: int
 
 
 class EventSummary(BaseModel):
     event_id: int
     slug: str
-    invited: int
-    attending: int
-    declined: int
-    awaiting: int
+    capacity: int | None
+    reserved: int  # sum of max_guests of invited households (must stay <= capacity)
+    households_invited: int
+    households_attending: int
+    households_declined: int
+    households_awaiting: int
+    people_attending: int
     meals: dict[str, int]
+    zodiacs: dict[str, int]
 
 
 class Summary(BaseModel):

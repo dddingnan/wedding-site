@@ -1,4 +1,4 @@
-household,email,language,guests,plus_ones,events,invite_code
-The Kim Family,kim@example.com,ko,Minji Kim;Jisoo Kim,0,korea,
-Uncle Wei,,zh-TW,Wei Hsu,1,,
-Alex Johnson,alex@example.com,en,Alex Johnson,1,taiwan,
+household,first_name,last_name,email,language,max_guests,main_event,other_events,invite_code
+Kim Family,Minji,Kim,kim@example.com,ko,2,korea,,
+Hsu Family,Wei,Hsu,,zh-TW,2,taiwan,korea,
+Alex Johnson,Alex,Johnson,alex@example.com,en,2,taiwan,,

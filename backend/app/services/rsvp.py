@@ -4,12 +4,12 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Event, Guest, Household, Rsvp
-from app.schemas import RsvpSubmit
+from app.models import Event, Household, Rsvp
+from app.schemas import EventResponse, RsvpSubmit
 from app.services.invite_codes import normalize
 
 HOUSEHOLD_LOAD = (
-    selectinload(Household.guests).selectinload(Guest.rsvps),
+    selectinload(Household.rsvps),
     selectinload(Household.events).selectinload(Event.hotels),
 )
 
@@ -23,37 +23,49 @@ def get_household_by_code(db: Session, code: str) -> Household:
     return household
 
 
+def _invalid(message: str) -> HTTPException:
+    return HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, message)
+
+
+def _validate(resp: EventResponse, event: Event, max_guests: int) -> None:
+    if not resp.attending:
+        return
+    if not 1 <= resp.party_size <= max_guests:
+        raise _invalid(f"{event.slug}: party size must be between 1 and {max_guests}")
+    meals = sum(resp.meals.values())
+    if meals != resp.party_size:
+        raise _invalid(f"{event.slug}: {meals} meals chosen for {resp.party_size} people")
+    for animal, count in resp.zodiacs.items():
+        if animal not in event.gift_zodiacs:
+            raise _invalid(f"{event.slug}: not asking about {animal}")
+        if count > resp.party_size:
+            raise _invalid(f"{event.slug}: more {animal} than people coming")
+
+
 def submit_rsvp(db: Session, code: str, payload: RsvpSubmit) -> Household:
     household = get_household_by_code(db, code)
-    guests_by_id = {g.id: g for g in household.guests}
-    invited_event_ids = {e.id for e in household.events}
+    events_by_id = {e.id: e for e in household.events}
 
     for resp in payload.responses:
-        guest = guests_by_id.get(resp.guest_id)
-        # Reject IDs from other households/events so one code can't edit another invite.
-        if guest is None:
-            raise HTTPException(
-                status.HTTP_422_UNPROCESSABLE_CONTENT,
-                f"Guest {resp.guest_id} is not on this invitation",
-            )
-        if resp.event_id not in invited_event_ids:
-            raise HTTPException(
-                status.HTTP_422_UNPROCESSABLE_CONTENT,
-                f"This invitation does not include event {resp.event_id}",
-            )
-        if guest.is_plus_one and resp.full_name:
-            guest.full_name = resp.full_name.strip()
+        event = events_by_id.get(resp.event_id)
+        # Reject other event IDs so one code can't answer for an event it isn't invited to.
+        if event is None:
+            raise _invalid(f"This invitation does not include event {resp.event_id}")
+        _validate(resp, event, household.max_guests)
 
-        rsvp = next((r for r in guest.rsvps if r.event_id == resp.event_id), None)
+        rsvp = next((r for r in household.rsvps if r.event_id == event.id), None)
         if rsvp is None:
-            rsvp = Rsvp(event_id=resp.event_id, attending=resp.attending)
-            guest.rsvps.append(rsvp)
+            rsvp = Rsvp(event_id=event.id, attending=resp.attending)
+            household.rsvps.append(rsvp)
         rsvp.attending = resp.attending
-        # Meal/dietary only make sense for people who are coming.
-        rsvp.meal = resp.meal if resp.attending else None
+        # Counts and dietary notes only make sense for people who are coming.
+        rsvp.party_size = resp.party_size if resp.attending else 0
+        rsvp.meals = {m: n for m, n in resp.meals.items() if n} if resp.attending else {}
+        rsvp.zodiacs = {z: n for z, n in resp.zodiacs.items() if n} if resp.attending else {}
         rsvp.dietary = resp.dietary if resp.attending else None
 
     household.note = payload.note
     household.responded_at = datetime.now(UTC)
     db.commit()
+    db.expire_all()
     return get_household_by_code(db, code)

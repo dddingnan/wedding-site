@@ -11,8 +11,9 @@ Wedding invitation site for Dingnan & Hyang — two ceremonies, three languages 
 ## How it works
 
 - Each **household** gets a 6-character **invite code** (no look-alike characters like `0/O` or `1/I/L`) printed on the card, or a QR code to `/rsvp?code=XXXXXX`.
-- Guests RSVP **per guest, per event** — a household can be invited to one or both ceremonies.
-- Plus-one slots start as `Guest`; the guest types the name when they RSVP.
+- Each invitation is a **household** (e.g. Hsu Family) with a max number of people, a main event and optionally the other ceremony.
+- Households RSVP **per event**: how many are coming, meal counts, and how many were born in that event's gift zodiac animals.
+- Per event, the invited households' max people can't add up to more than the event's capacity.
 - `/` redirects to `/en`, `/zh-TW` or `/ko` based on the browser language; the switcher in the header changes it.
 - `/en/admin` (password-protected) shows per-event headcounts and meals, lets you add/delete invitations, and exports a CSV that opens correctly in Excel with Chinese/Korean names.
 

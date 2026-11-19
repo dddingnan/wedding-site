@@ -1,12 +1,12 @@
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, String, Table, Text
+from sqlalchemy import JSON, Column, DateTime, ForeignKey, String, Table, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
 # Which households are invited to which events (many-to-many).
-# Some guests may only be invited to one of the two ceremonies.
+# Every household is invited to its main event; some also to the other ceremony.
 household_events = Table(
     "household_events",
     Base.metadata,
@@ -34,6 +34,11 @@ class Event(Base):
     venue: Mapped[str | None] = mapped_column(String(300))
     address: Mapped[str | None] = mapped_column(String(500))
     map_url: Mapped[str | None] = mapped_column(String(500))
+    # Most people this event can hold. The households invited to it can't have a combined
+    # max_guests above this. None = no limit set yet.
+    capacity: Mapped[int | None]
+    # Zodiac animals that get a special gift at this event, e.g. ["rooster", "rat"].
+    gift_zodiacs: Mapped[list[str]] = mapped_column(JSON, default=list, server_default="[]")
 
     hotels: Mapped[list["EventHotel"]] = relationship(
         back_populates="event",

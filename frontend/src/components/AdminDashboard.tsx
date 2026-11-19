@@ -9,21 +9,26 @@ import {
   ApiError,
   type HouseholdAdmin,
   type Summary,
-  type WeddingEvent,
+  type WeddingEventAdmin,
 } from "@/lib/api";
 
 const input = "rounded-md border border-line bg-paper px-3 py-2 text-sm";
 const button =
   "rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-ink disabled:opacity-60";
 
-type Data = { summary: Summary; events: WeddingEvent[]; households: HouseholdAdmin[] };
+type Data = { summary: Summary; events: WeddingEventAdmin[]; households: HouseholdAdmin[] };
+
+const counts = (c: Record<string, number>) =>
+  Object.entries(c)
+    .map(([k, n]) => `${k} ${n}`)
+    .join(" · ");
 
 export function AdminDashboard() {
   const token = useAdminToken();
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<Data | null>(null);
-  // Bump to refetch after a change (add/delete).
+  // Bump to refetch after a change (add/edit/delete).
   const [version, setVersion] = useState(0);
   const reload = () => setVersion((v) => v + 1);
 
@@ -78,8 +83,20 @@ export function AdminDashboard() {
     reload();
   }
 
+  async function setMax(h: HouseholdAdmin, max: number) {
+    if (!token || max === h.max_guests || !(max >= 1)) return;
+    setError(null);
+    try {
+      await admin(token).updateHousehold(h.id, { max_guests: max });
+    } catch (err) {
+      setError(`${h.name}: ${err instanceof ApiError ? err.message : String(err)}`);
+    }
+    reload();
+  }
+
   const summary = data?.summary;
   const events = data?.events ?? [];
+  const upcoming = events.filter((e) => e.kind === "upcoming");
   const households = data?.households ?? [];
 
   if (!token) {
@@ -122,14 +139,18 @@ export function AdminDashboard() {
           <div className="grid gap-4 sm:grid-cols-2">
             {summary.events.map((e) => (
               <div key={e.event_id} className="border-line bg-card rounded-xl border p-5">
-                <h2 className="mb-3 font-medium">{e.slug}</h2>
+                <h2 className="font-medium">{e.slug}</h2>
+                <p className="text-muted mb-3 text-xs">
+                  Seats given out: {e.reserved}
+                  {e.capacity ? ` of ${e.capacity}` : " (no capacity set)"}
+                </p>
                 <dl className="grid grid-cols-4 gap-2 text-center">
                   {(
                     [
-                      ["Invited", e.invited],
-                      ["Yes", e.attending],
-                      ["No", e.declined],
-                      ["Waiting", e.awaiting],
+                      ["People coming", e.people_attending],
+                      ["Households yes", e.households_attending],
+                      ["No", e.households_declined],
+                      ["Waiting", e.households_awaiting],
                     ] as const
                   ).map(([label, n]) => (
                     <div key={label}>
@@ -139,12 +160,10 @@ export function AdminDashboard() {
                   ))}
                 </dl>
                 {Object.keys(e.meals).length > 0 && (
-                  <p className="text-muted mt-3 text-xs">
-                    Meals:{" "}
-                    {Object.entries(e.meals)
-                      .map(([m, n]) => `${m} ${n}`)
-                      .join(" · ")}
-                  </p>
+                  <p className="text-muted mt-3 text-xs">Meals: {counts(e.meals)}</p>
+                )}
+                {Object.keys(e.zodiacs).length > 0 && (
+                  <p className="text-muted mt-1 text-xs">Zodiac gifts: {counts(e.zodiacs)}</p>
                 )}
               </div>
             ))}
@@ -157,10 +176,11 @@ export function AdminDashboard() {
         </section>
       )}
 
-      <AddHousehold token={token} events={events} onAdded={reload} />
+      <AddHousehold token={token} events={upcoming} onAdded={reload} />
 
       <section>
         <h2 className="mb-3 font-medium">Invitations ({households.length})</h2>
+        {error && <p className="text-danger mb-3 text-sm">{error}</p>}
         <div className="border-line bg-card overflow-x-auto rounded-xl border">
           <table className="w-full text-left text-sm">
             <thead className="border-line text-muted border-b text-xs uppercase">
@@ -168,8 +188,8 @@ export function AdminDashboard() {
                 <th className="p-3">Household</th>
                 <th className="p-3">Code</th>
                 <th className="p-3">Lang</th>
-                <th className="p-3">Events</th>
-                <th className="p-3">Guests</th>
+                <th className="p-3">Max</th>
+                <th className="p-3">RSVP (★ = main event)</th>
                 <th className="p-3" />
               </tr>
             </thead>
@@ -178,25 +198,43 @@ export function AdminDashboard() {
                 <tr key={h.id}>
                   <td className="p-3">
                     {h.name}
+                    {(h.contact_first_name || h.contact_last_name) && (
+                      <p className="text-muted text-xs">
+                        {[h.contact_first_name, h.contact_last_name].filter(Boolean).join(" ")}
+                      </p>
+                    )}
                     {h.note && <p className="text-muted mt-1 text-xs italic">“{h.note}”</p>}
                   </td>
                   <td className="p-3 font-mono">{h.invite_code}</td>
                   <td className="p-3">{h.preferred_language}</td>
-                  <td className="p-3">{h.events.map((e) => e.slug).join(", ")}</td>
                   <td className="p-3">
-                    {h.guests.map((g) => (
-                      <div key={g.id}>
-                        {g.full_name}{" "}
-                        <span className="text-muted text-xs">
-                          {h.events
-                            .map((ev) => {
-                              const r = g.rsvps.find((r) => r.event_id === ev.id);
-                              return `${ev.slug}: ${r ? (r.attending ? "✓" : "✗") : "…"}`;
-                            })
-                            .join("  ")}
-                        </span>
-                      </div>
-                    ))}
+                    <input
+                      // Remount after a save/reload so a rejected value snaps back.
+                      key={`${h.id}-${h.max_guests}-${version}`}
+                      type="number"
+                      min={1}
+                      max={50}
+                      defaultValue={h.max_guests}
+                      onBlur={(e) => setMax(h, Number(e.target.value))}
+                      onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+                      className={`${input} w-16`}
+                      aria-label={`Max people for ${h.name}`}
+                    />
+                  </td>
+                  <td className="p-3">
+                    {h.events.map((ev) => {
+                      const r = h.rsvps.find((r) => r.event_id === ev.id);
+                      const answer = !r ? "…" : r.attending ? `✓ ${r.party_size}` : "✗";
+                      return (
+                        <div key={ev.id}>
+                          {ev.id === h.primary_event_id && "★ "}
+                          {ev.slug}: {answer}
+                          {r && Object.keys(r.zodiacs).length > 0 && (
+                            <span className="text-muted text-xs"> ({counts(r.zodiacs)})</span>
+                          )}
+                        </div>
+                      );
+                    })}
                   </td>
                   <td className="p-3 text-right">
                     <button
@@ -222,40 +260,40 @@ function AddHousehold({
   onAdded,
 }: {
   token: string;
-  events: WeddingEvent[];
+  events: WeddingEventAdmin[];
   onAdded: () => void;
 }) {
   const [name, setName] = useState("");
-  const [guests, setGuests] = useState("");
-  const [plusOnes, setPlusOnes] = useState(0);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [maxGuests, setMaxGuests] = useState(1);
   const [language, setLanguage] = useState<"en" | "zh-TW" | "ko">("en");
-  const [slugs, setSlugs] = useState<string[] | null>(null); // null = all events
+  const [primary, setPrimary] = useState<string | null>(null); // null = first event
+  const [others, setOthers] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const selected = slugs ?? events.map((e) => e.slug);
+  const main = primary ?? events[0]?.slug ?? "";
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      const names = guests
-        .split(/[\n,;]/)
-        .map((s) => s.trim())
-        .filter(Boolean);
       await admin(token).createHousehold({
         name,
+        contact_first_name: firstName || null,
+        contact_last_name: lastName || null,
         preferred_language: language,
-        event_slugs: selected,
-        guests: [
-          ...names.map((full_name) => ({ full_name, is_plus_one: false })),
-          ...Array.from({ length: plusOnes }, () => ({ full_name: "Guest", is_plus_one: true })),
-        ],
+        max_guests: maxGuests,
+        primary_event: main,
+        other_events: others.filter((s) => s !== main),
       });
       setName("");
-      setGuests("");
-      setPlusOnes(0);
+      setFirstName("");
+      setLastName("");
+      setMaxGuests(1);
+      setOthers([]);
       onAdded();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : String(err));
@@ -274,9 +312,21 @@ function AddHousehold({
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Household (e.g. The Kim Family)"
-          className={input}
+          placeholder="Household (e.g. Hsu Family)"
+          className={`${input} sm:col-span-2`}
           required
+        />
+        <input
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          placeholder="Contact first name"
+          className={input}
+        />
+        <input
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+          placeholder="Contact last name"
+          className={input}
         />
         <select
           value={language}
@@ -287,45 +337,48 @@ function AddHousehold({
           <option value="zh-TW">繁體中文</option>
           <option value="ko">한국어</option>
         </select>
-        <textarea
-          value={guests}
-          onChange={(e) => setGuests(e.target.value)}
-          placeholder="Guest names, one per line"
-          rows={3}
-          className={`${input} sm:col-span-2`}
-          required
-        />
         <label className="flex items-center gap-2 text-sm">
-          Plus-ones
+          Max people
           <input
             type="number"
-            min={0}
-            max={5}
-            value={plusOnes}
-            onChange={(e) => setPlusOnes(Number(e.target.value))}
+            min={1}
+            max={50}
+            value={maxGuests}
+            onChange={(e) => setMaxGuests(Number(e.target.value))}
             className={`${input} w-20`}
           />
         </label>
+        <label className="flex items-center gap-2 text-sm">
+          Main event
+          <select value={main} onChange={(e) => setPrimary(e.target.value)} className={input}>
+            {events.map((ev) => (
+              <option key={ev.id} value={ev.slug}>
+                {ev.slug}
+              </option>
+            ))}
+          </select>
+        </label>
         <div className="flex flex-wrap items-center gap-3 text-sm">
-          {events.map((ev) => (
-            <label key={ev.id} className="flex items-center gap-1">
-              <input
-                type="checkbox"
-                checked={selected.includes(ev.slug)}
-                onChange={(e) =>
-                  setSlugs(
-                    e.target.checked
-                      ? [...selected, ev.slug]
-                      : selected.filter((s) => s !== ev.slug),
-                  )
-                }
-              />
-              {ev.slug}
-            </label>
-          ))}
+          Also invite to:
+          {events
+            .filter((ev) => ev.slug !== main)
+            .map((ev) => (
+              <label key={ev.id} className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={others.includes(ev.slug)}
+                  onChange={(e) =>
+                    setOthers(
+                      e.target.checked ? [...others, ev.slug] : others.filter((s) => s !== ev.slug),
+                    )
+                  }
+                />
+                {ev.slug}
+              </label>
+            ))}
         </div>
         <div className="sm:col-span-2">
-          <button disabled={busy || selected.length === 0} className={button}>
+          <button disabled={busy || !main} className={button}>
             {busy ? "Adding…" : "Add"}
           </button>
           {error && <span className="text-danger ml-3 text-sm">{error}</span>}

@@ -90,6 +90,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/events/{event_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Event */
+        patch: operations["update_event_api_admin_events__event_id__patch"];
+        trace?: never;
+    };
     "/api/admin/households": {
         parameters: {
             query?: never;
@@ -122,7 +139,8 @@ export interface paths {
         delete: operations["delete_household_api_admin_households__household_id__delete"];
         options?: never;
         head?: never;
-        patch?: never;
+        /** Edit Household */
+        patch: operations["edit_household_api_admin_households__household_id__patch"];
         trace?: never;
     };
     "/api/admin/summary": {
@@ -168,6 +186,39 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** EventAdminOut */
+        EventAdminOut: {
+            /** Id */
+            id: number;
+            /** Slug */
+            slug: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "upcoming" | "memory";
+            /** Theme */
+            theme: ("gold" | "red") | null;
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /** Timezone */
+            timezone: string;
+            /** Venue */
+            venue: string | null;
+            /** Address */
+            address: string | null;
+            /** Map Url */
+            map_url: string | null;
+            /** Gift Zodiacs */
+            gift_zodiacs: ("rat" | "ox" | "tiger" | "rabbit" | "dragon" | "snake" | "horse" | "goat" | "monkey" | "rooster" | "dog" | "pig")[];
+            /** Hotels */
+            hotels: components["schemas"]["HotelOut"][];
+            /** Capacity */
+            capacity: number | null;
+        };
         /** EventCreate */
         EventCreate: {
             /** Slug */
@@ -196,6 +247,13 @@ export interface components {
             address?: string | null;
             /** Map Url */
             map_url?: string | null;
+            /** Capacity */
+            capacity?: number | null;
+            /**
+             * Gift Zodiacs
+             * @default []
+             */
+            gift_zodiacs: ("rat" | "ox" | "tiger" | "rabbit" | "dragon" | "snake" | "horse" | "goat" | "monkey" | "rooster" | "dog" | "pig")[];
             /**
              * Hotels
              * @default []
@@ -228,8 +286,41 @@ export interface components {
             address: string | null;
             /** Map Url */
             map_url: string | null;
+            /** Gift Zodiacs */
+            gift_zodiacs: ("rat" | "ox" | "tiger" | "rabbit" | "dragon" | "snake" | "horse" | "goat" | "monkey" | "rooster" | "dog" | "pig")[];
             /** Hotels */
             hotels: components["schemas"]["HotelOut"][];
+        };
+        /**
+         * EventResponse
+         * @description The household's answer for one event.
+         */
+        EventResponse: {
+            /** Event Id */
+            event_id: number;
+            /** Attending */
+            attending: boolean;
+            /**
+             * Party Size
+             * @default 0
+             */
+            party_size: number;
+            /**
+             * Meals
+             * @default {}
+             */
+            meals: {
+                [key: string]: number;
+            };
+            /**
+             * Zodiacs
+             * @default {}
+             */
+            zodiacs: {
+                [key: string]: number;
+            };
+            /** Dietary */
+            dietary?: string | null;
         };
         /** EventSummary */
         EventSummary: {
@@ -237,54 +328,38 @@ export interface components {
             event_id: number;
             /** Slug */
             slug: string;
-            /** Invited */
-            invited: number;
-            /** Attending */
-            attending: number;
-            /** Declined */
-            declined: number;
-            /** Awaiting */
-            awaiting: number;
+            /** Capacity */
+            capacity: number | null;
+            /** Reserved */
+            reserved: number;
+            /** Households Invited */
+            households_invited: number;
+            /** Households Attending */
+            households_attending: number;
+            /** Households Declined */
+            households_declined: number;
+            /** Households Awaiting */
+            households_awaiting: number;
+            /** People Attending */
+            people_attending: number;
             /** Meals */
             meals: {
                 [key: string]: number;
             };
+            /** Zodiacs */
+            zodiacs: {
+                [key: string]: number;
+            };
         };
-        /** GuestCreate */
-        GuestCreate: {
-            /** Full Name */
-            full_name: string;
-            /**
-             * Is Plus One
-             * @default false
-             */
-            is_plus_one: boolean;
-        };
-        /** GuestOut */
-        GuestOut: {
-            /** Id */
-            id: number;
-            /** Full Name */
-            full_name: string;
-            /** Is Plus One */
-            is_plus_one: boolean;
-            /** Rsvps */
-            rsvps: components["schemas"]["RsvpOut"][];
-        };
-        /** GuestResponse */
-        GuestResponse: {
-            /** Guest Id */
-            guest_id: number;
-            /** Event Id */
-            event_id: number;
-            /** Attending */
-            attending: boolean;
-            /** Full Name */
-            full_name?: string | null;
-            /** Meal */
-            meal?: ("beef" | "fish" | "vegetarian" | "kids") | null;
-            /** Dietary */
-            dietary?: string | null;
+        /**
+         * EventUpdate
+         * @description Fields left out are unchanged.
+         */
+        EventUpdate: {
+            /** Capacity */
+            capacity?: number | null;
+            /** Gift Zodiacs */
+            gift_zodiacs?: ("rat" | "ox" | "tiger" | "rabbit" | "dragon" | "snake" | "horse" | "goat" | "monkey" | "rooster" | "dog" | "pig")[] | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -329,32 +404,42 @@ export interface components {
         HouseholdAdminOut: {
             /** Name */
             name: string;
+            /** Contact First Name */
+            contact_first_name: string | null;
+            /** Contact Last Name */
+            contact_last_name: string | null;
             /**
              * Preferred Language
              * @enum {string}
              */
             preferred_language: "en" | "zh-TW" | "ko";
+            /** Max Guests */
+            max_guests: number;
+            /** Primary Event Id */
+            primary_event_id: number | null;
             /** Note */
             note: string | null;
             /** Responded At */
             responded_at: string | null;
             /** Events */
             events: components["schemas"]["EventOut"][];
-            /** Guests */
-            guests: components["schemas"]["GuestOut"][];
+            /** Rsvps */
+            rsvps: components["schemas"]["RsvpOut"][];
             /** Id */
             id: number;
             /** Invite Code */
             invite_code: string;
             /** Email */
             email: string | null;
-            /** Max Guests */
-            max_guests: number;
         };
         /** HouseholdCreate */
         HouseholdCreate: {
             /** Name */
             name: string;
+            /** Contact First Name */
+            contact_first_name?: string | null;
+            /** Contact Last Name */
+            contact_last_name?: string | null;
             /** Email */
             email?: string | null;
             /**
@@ -363,30 +448,68 @@ export interface components {
              * @enum {string}
              */
             preferred_language: "en" | "zh-TW" | "ko";
-            /** Guests */
-            guests: components["schemas"]["GuestCreate"][];
+            /**
+             * Max Guests
+             * @default 1
+             */
+            max_guests: number;
+            /** Primary Event */
+            primary_event: string;
+            /**
+             * Other Events
+             * @default []
+             */
+            other_events: string[];
             /** Invite Code */
             invite_code?: string | null;
-            /** Event Slugs */
-            event_slugs?: string[] | null;
         };
         /** HouseholdOut */
         HouseholdOut: {
             /** Name */
             name: string;
+            /** Contact First Name */
+            contact_first_name: string | null;
+            /** Contact Last Name */
+            contact_last_name: string | null;
             /**
              * Preferred Language
              * @enum {string}
              */
             preferred_language: "en" | "zh-TW" | "ko";
+            /** Max Guests */
+            max_guests: number;
+            /** Primary Event Id */
+            primary_event_id: number | null;
             /** Note */
             note: string | null;
             /** Responded At */
             responded_at: string | null;
             /** Events */
             events: components["schemas"]["EventOut"][];
-            /** Guests */
-            guests: components["schemas"]["GuestOut"][];
+            /** Rsvps */
+            rsvps: components["schemas"]["RsvpOut"][];
+        };
+        /**
+         * HouseholdUpdate
+         * @description Fields left out are unchanged.
+         */
+        HouseholdUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Contact First Name */
+            contact_first_name?: string | null;
+            /** Contact Last Name */
+            contact_last_name?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Preferred Language */
+            preferred_language?: ("en" | "zh-TW" | "ko") | null;
+            /** Max Guests */
+            max_guests?: number | null;
+            /** Primary Event */
+            primary_event?: string | null;
+            /** Other Events */
+            other_events?: string[] | null;
         };
         /** InviteLookup */
         InviteLookup: {
@@ -399,15 +522,23 @@ export interface components {
             event_id: number;
             /** Attending */
             attending: boolean;
-            /** Meal */
-            meal: ("beef" | "fish" | "vegetarian" | "kids") | null;
+            /** Party Size */
+            party_size: number;
+            /** Meals */
+            meals: {
+                [key: string]: number;
+            };
+            /** Zodiacs */
+            zodiacs: {
+                [key: string]: number;
+            };
             /** Dietary */
             dietary: string | null;
         };
         /** RsvpSubmit */
         RsvpSubmit: {
             /** Responses */
-            responses: components["schemas"]["GuestResponse"][];
+            responses: components["schemas"]["EventResponse"][];
             /** Note */
             note?: string | null;
         };
@@ -590,7 +721,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["EventOut"][];
+                    "application/json": components["schemas"]["EventAdminOut"][];
                 };
             };
         };
@@ -614,7 +745,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["EventOut"];
+                    "application/json": components["schemas"]["EventAdminOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_event_api_admin_events__event_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EventUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventAdminOut"];
                 };
             };
             /** @description Validation Error */
@@ -698,6 +864,41 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    edit_household_api_admin_households__household_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                household_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HouseholdUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HouseholdAdminOut"];
+                };
             };
             /** @description Validation Error */
             422: {

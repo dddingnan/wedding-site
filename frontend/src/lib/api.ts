@@ -5,13 +5,18 @@ type Schemas = components["schemas"];
 export type Household = Schemas["HouseholdOut"];
 export type HouseholdAdmin = Schemas["HouseholdAdminOut"];
 export type HouseholdCreate = Schemas["HouseholdCreate"];
+export type HouseholdUpdate = Schemas["HouseholdUpdate"];
 export type WeddingEvent = Schemas["EventOut"];
-export type Guest = Schemas["GuestOut"];
-export type Meal = NonNullable<Schemas["GuestResponse"]["meal"]>;
+export type WeddingEventAdmin = Schemas["EventAdminOut"];
+export type Rsvp = Schemas["RsvpOut"];
 export type RsvpSubmit = Schemas["RsvpSubmit"];
+export type EventResponse = Schemas["EventResponse"];
 export type Summary = Schemas["Summary"];
+export type Zodiac = WeddingEvent["gift_zodiacs"][number];
 
-export const MEALS: Meal[] = ["beef", "fish", "vegetarian", "kids"];
+// Keep in sync with `Meal` in backend/app/schemas.py (labels: messages "meals.*").
+export const MEALS = ["beef", "fish", "vegetarian", "kids"] as const;
+export type Meal = (typeof MEALS)[number];
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -68,11 +73,17 @@ export const adminLogin = (password: string) =>
 
 export const admin = (token: string) => ({
   summary: () => request<Summary>("/admin/summary", { token }),
-  events: () => request<WeddingEvent[]>("/admin/events", { token }),
+  events: () => request<WeddingEventAdmin[]>("/admin/events", { token }),
   households: () => request<HouseholdAdmin[]>("/admin/households", { token }),
   createHousehold: (body: HouseholdCreate) =>
     request<HouseholdAdmin>("/admin/households", {
       method: "POST",
+      body: JSON.stringify(body),
+      token,
+    }),
+  updateHousehold: (id: number, body: HouseholdUpdate) =>
+    request<HouseholdAdmin>(`/admin/households/${id}`, {
+      method: "PATCH",
       body: JSON.stringify(body),
       token,
     }),

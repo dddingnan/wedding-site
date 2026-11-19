@@ -1,13 +1,52 @@
-def test_lookup_is_case_and_dash_insensitive(client, household):
+import pytest
+
+from tests.conftest import make_household
+
+
+def rsvp(client, code, *responses, note=None):
+    return client.put(f"/api/invites/{code}/rsvp", json={"responses": responses, "note": note})
+
+
+def yes(event, party_size, meals, zodiacs=None, dietary=None):
+    return {
+        "event_id": event["id"],
+        "attending": True,
+        "party_size": party_size,
+        "meals": meals,
+        "zodiacs": zodiacs or {},
+        "dietary": dietary,
+    }
+
+
+def no(event):
+    return {"event_id": event["id"], "attending": False}
+
+
+def declined(event):
+    return {
+        "event_id": event["id"],
+        "attending": False,
+        "party_size": 0,
+        "meals": {},
+        "zodiacs": {},
+        "dietary": None,
+    }
+
+
+def test_lookup_is_case_and_dash_insensitive(client, household, events):
     code = household["invite_code"]
     messy = f" {code[:3].lower()}-{code[3:].lower()} "
     res = client.post("/api/invites/lookup", json={"code": messy})
     assert res.status_code == 200
     body = res.json()
-    assert body["name"] == "The Kim Family"
-    assert body["preferred_language"] == "ko"
+    assert body["name"] == "Kim Family"
+    assert (body["contact_first_name"], body["contact_last_name"]) == ("Minji", "Kim")
+    assert body["max_guests"] == 3
+    assert body["primary_event_id"] == events[0]["id"]
     assert [e["slug"] for e in body["events"]] == ["korea", "taiwan"]  # sorted by date
+    assert body["events"][0]["gift_zodiacs"] == ["rooster", "rat"]
     assert "invite_code" not in body  # guests never see admin fields
+    assert "capacity" not in body["events"][0]
 
 
 def test_unknown_code_returns_404(client):
@@ -15,94 +54,62 @@ def test_unknown_code_returns_404(client):
     assert res.status_code == 404
 
 
-def test_rsvp_per_event_and_plus_one_name(client, household, events):
-    code = household["invite_code"]
-    main, plus_one = household["guests"]
+def test_rsvp_per_event(client, household, events):
     korea, taiwan = events
-    res = client.put(
-        f"/api/invites/{code}/rsvp",
-        json={
-            "responses": [
-                {
-                    "guest_id": main["id"],
-                    "event_id": korea["id"],
-                    "attending": True,
-                    "meal": "fish",
-                },
-                {"guest_id": main["id"], "event_id": taiwan["id"], "attending": False},
-                {
-                    "guest_id": plus_one["id"],
-                    "event_id": korea["id"],
-                    "attending": True,
-                    "full_name": "Jun Park",
-                    "meal": "beef",
-                    "dietary": "no shellfish",
-                },
-            ],
-            "note": "Can't wait!",
+    res = rsvp(
+        client,
+        household["invite_code"],
+        yes(korea, 3, {"beef": 1, "fish": 1, "kids": 1}, {"rat": 1}, "no shellfish"),
+        no(taiwan),
+        note="Can't wait!",
+    )
+    assert res.status_code == 200, res.text
+    body = res.json()
+    assert body["rsvps"] == [
+        {
+            "event_id": korea["id"],
+            "attending": True,
+            "party_size": 3,
+            "meals": {"beef": 1, "fish": 1, "kids": 1},
+            "zodiacs": {"rat": 1},
+            "dietary": "no shellfish",
         },
-    )
-    assert res.status_code == 200
-    guests = res.json()["guests"]
-    assert guests[1]["full_name"] == "Jun Park"
-    assert {(r["event_id"], r["attending"]) for r in guests[0]["rsvps"]} == {
-        (korea["id"], True),
-        (taiwan["id"], False),
-    }
-    assert res.json()["responded_at"] is not None
+        declined(taiwan),
+    ]
+    assert body["note"] == "Can't wait!"
+    assert body["responded_at"] is not None
 
 
-def test_resubmit_updates_and_declining_clears_meal(client, household, events):
-    code = household["invite_code"]
-    gid, eid = household["guests"][0]["id"], events[0]["id"]
-    first = {"guest_id": gid, "event_id": eid, "attending": True, "meal": "fish"}
-    client.put(f"/api/invites/{code}/rsvp", json={"responses": [first]})
-    res = client.put(
-        f"/api/invites/{code}/rsvp",
-        json={"responses": [{**first, "attending": False}]},
-    )
-    rsvps = res.json()["guests"][0]["rsvps"]
-    assert rsvps == [{"event_id": eid, "attending": False, "meal": None, "dietary": None}]
+def test_resubmit_updates_and_declining_clears_counts(client, household, events):
+    code, korea = household["invite_code"], events[0]
+    rsvp(client, code, yes(korea, 2, {"fish": 2}, {"rooster": 1}))
+    res = rsvp(client, code, {**yes(korea, 2, {"fish": 2}, {"rooster": 1}), "attending": False})
+    assert res.json()["rsvps"] == [declined(korea)]
 
 
-def test_cannot_rsvp_for_guest_on_another_invite(client, admin_headers, household, events):
-    other = client.post(
-        "/api/admin/households",
-        headers=admin_headers,
-        json={"name": "The Hsu Family", "guests": [{"full_name": "Wei Hsu"}]},
-    ).json()
-    res = client.put(
-        f"/api/invites/{household['invite_code']}/rsvp",
-        json={
-            "responses": [
-                {
-                    "guest_id": other["guests"][0]["id"],
-                    "event_id": events[0]["id"],
-                    "attending": False,
-                }
-            ]
-        },
-    )
-    assert res.status_code == 422
+@pytest.mark.parametrize(
+    "answer",
+    [
+        pytest.param({"party_size": 4, "meals": {"fish": 4}}, id="over-max-guests"),
+        pytest.param({"party_size": 0, "meals": {}}, id="zero-people-attending"),
+        pytest.param({"party_size": 2, "meals": {"fish": 1}}, id="meals-dont-add-up"),
+        pytest.param(
+            {"party_size": 2, "meals": {"fish": 2}, "zodiacs": {"dragon": 1}},
+            id="zodiac-not-asked-at-korea",
+        ),
+        pytest.param(
+            {"party_size": 2, "meals": {"fish": 2}, "zodiacs": {"rat": 3}},
+            id="more-zodiac-than-people",
+        ),
+    ],
+)
+def test_invalid_answers_rejected(client, household, events, answer):
+    body = {"event_id": events[0]["id"], "attending": True, **answer}
+    assert rsvp(client, household["invite_code"], body).status_code == 422
 
 
 def test_cannot_rsvp_for_event_not_invited_to(client, admin_headers, events):
-    korea_only = client.post(
-        "/api/admin/households",
-        headers=admin_headers,
-        json={"name": "Seoul Friends", "guests": [{"full_name": "A"}], "event_slugs": ["korea"]},
-    ).json()
+    korea_only = make_household(client, admin_headers, name="Seoul Friends")
     assert [e["slug"] for e in korea_only["events"]] == ["korea"]
-    res = client.put(
-        f"/api/invites/{korea_only['invite_code']}/rsvp",
-        json={
-            "responses": [
-                {
-                    "guest_id": korea_only["guests"][0]["id"],
-                    "event_id": events[1]["id"],
-                    "attending": True,
-                }
-            ]
-        },
-    )
+    res = rsvp(client, korea_only["invite_code"], yes(events[1], 1, {"fish": 1}))
     assert res.status_code == 422

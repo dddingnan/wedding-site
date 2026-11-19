@@ -7,6 +7,10 @@ Edit EVENTS below when venues/times are confirmed. Titles and descriptions
 shown to guests live in frontend/messages/*.json under "events.<slug>".
 Keep frontend/src/lib/schedule.ts in sync (home page).
 
+`capacity` is the most people the event holds: the invited households' max_guests
+can't add up to more. `gift_zodiacs` are the zodiac animals that get a special gift
+there; the RSVP asks how many people were born in those years.
+
 `hotels` is the hotel guide for that event. Re-running replaces the event's
 hotel list with the one below.
 """
@@ -42,6 +46,8 @@ EVENTS = [
         "venue": KOREA_VENUE,
         "address": KOREA_ADDRESS,
         "map_url": google_maps_url(f"{KOREA_VENUE}, {KOREA_ADDRESS}"),
+        "capacity": None,  # TODO: max people the venue holds
+        "gift_zodiacs": ["rooster", "rat"],
         "hotels": [],  # TODO: hotel guide (room block / booking code?)
     },
     {
@@ -53,6 +59,8 @@ EVENTS = [
         "venue": TAIWAN_VENUE,
         "address": TAIWAN_ADDRESS,
         "map_url": google_maps_url(f"{TAIWAN_VENUE}, {TAIWAN_ADDRESS}"),
+        "capacity": None,  # TODO: max people the venue holds
+        "gift_zodiacs": ["dragon", "rat"],
         "hotels": [],  # TODO: hotel guide (room block / booking code?)
     },
     {
@@ -66,6 +74,8 @@ EVENTS = [
         "venue": US_VENUE,
         "address": US_ADDRESS,
         "map_url": google_maps_url(f"{US_VENUE}, {US_ADDRESS}"),
+        "capacity": None,
+        "gift_zodiacs": [],
         "hotels": [],
     },
 ]
