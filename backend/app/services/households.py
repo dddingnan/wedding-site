@@ -8,14 +8,23 @@ from app.services.invite_codes import generate_unique_code, normalize
 
 
 def resolve_events(db: Session, slugs: list[str] | None) -> list[Event]:
-    """None means 'every event'. Unknown slugs are an error, not silently dropped."""
+    """None means 'every upcoming event'. Unknown slugs are an error, not silently dropped.
+
+    Memory events (already happened) have no RSVP, so nobody can be invited to them.
+    """
+    upcoming = select(Event).where(Event.kind == "upcoming")
     if slugs is None:
-        return list(db.scalars(select(Event)))
+        return list(db.scalars(upcoming))
     events = list(db.scalars(select(Event).where(Event.slug.in_(slugs))))
     missing = set(slugs) - {e.slug for e in events}
     if missing:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT, f"Unknown event(s): {sorted(missing)}"
+        )
+    memory = sorted(e.slug for e in events if e.kind != "upcoming")
+    if memory:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, f"Can't invite to past event(s): {memory}"
         )
     return events
 

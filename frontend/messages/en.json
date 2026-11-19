@@ -25,11 +25,15 @@
   "events": {
     "korea": {
       "title": "Wedding Ceremony in Korea",
-      "place": "Venue to be announced"
+      "place": "The Westin Josun Seoul"
     },
-    "second": {
-      "title": "Second Celebration",
-      "place": "Venue to be announced"
+    "taiwan": {
+      "title": "Wedding Ceremony in Taiwan",
+      "place": "Mandarin Oriental, Taipei"
+    },
+    "us": {
+      "title": "Our Wedding in the US",
+      "place": "Circuit Court for Baltimore County, Towson"
     },
     "time": "{date} · {time}",
     "map": "Open map"

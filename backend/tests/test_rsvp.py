@@ -6,7 +6,7 @@ def test_lookup_is_case_and_dash_insensitive(client, household):
     body = res.json()
     assert body["name"] == "The Kim Family"
     assert body["preferred_language"] == "ko"
-    assert [e["slug"] for e in body["events"]] == ["korea", "second"]  # sorted by date
+    assert [e["slug"] for e in body["events"]] == ["korea", "taiwan"]  # sorted by date
     assert "invite_code" not in body  # guests never see admin fields
 
 
@@ -18,7 +18,7 @@ def test_unknown_code_returns_404(client):
 def test_rsvp_per_event_and_plus_one_name(client, household, events):
     code = household["invite_code"]
     main, plus_one = household["guests"]
-    korea, second = events
+    korea, taiwan = events
     res = client.put(
         f"/api/invites/{code}/rsvp",
         json={
@@ -29,7 +29,7 @@ def test_rsvp_per_event_and_plus_one_name(client, household, events):
                     "attending": True,
                     "meal": "fish",
                 },
-                {"guest_id": main["id"], "event_id": second["id"], "attending": False},
+                {"guest_id": main["id"], "event_id": taiwan["id"], "attending": False},
                 {
                     "guest_id": plus_one["id"],
                     "event_id": korea["id"],
@@ -47,7 +47,7 @@ def test_rsvp_per_event_and_plus_one_name(client, household, events):
     assert guests[1]["full_name"] == "Jun Park"
     assert {(r["event_id"], r["attending"]) for r in guests[0]["rsvps"]} == {
         (korea["id"], True),
-        (second["id"], False),
+        (taiwan["id"], False),
     }
     assert res.json()["responded_at"] is not None
 

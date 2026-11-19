@@ -15,9 +15,11 @@
 
 ## Open questions
 
-- [ ] Confirm the second ceremony (2028-01-02) is the Taiwan one at Mandarin Oriental, and which city
-- [ ] Which Westin in Korea? Exact ceremony time?
-- [ ] US wedding: date, place, which photos/story to include
+- [x] Venues: Korea = The Westin Josun Seoul · Taiwan = Mandarin Oriental, Taipei (2028-01-02, noon)
+- [ ] Korea ceremony: exact time (seeded as 12:00 placeholder)
+- [ ] Hotel guide: which hotels per event, room block / booking code?
+- [x] US wedding: 2025-04-11, Circuit Court for Baltimore County (Towson courthouse)
+- [ ] US wedding: which photos/story to include
 - [ ] RSVP deadline
 - [ ] Our names in 中文 / 한국어 for each language version
 - [ ] Which zodiacs get a special gift (rat, rooster, dragon?) and what the gift is
@@ -27,15 +29,15 @@
 
 ## Phase 1 — Data model (do first; everything depends on it)
 
-- [ ] Fix event data: Taiwan time zone `Asia/Taipei` (currently a `America/New_York` placeholder), venue name/address/map link for each
-- [ ] Event `theme`: Korea = gold, Taiwan = red
-- [ ] Event `kind`: `upcoming` (RSVP) vs `memory` (US wedding, read-only)
+- [x] Fix event data: Taiwan time zone `Asia/Taipei` (currently a `America/New_York` placeholder), venue name/address/map link for each
+- [x] Event `theme`: Korea = gold, Taiwan = red
+- [x] Event `kind`: `upcoming` (RSVP) vs `memory` (US wedding, read-only)
 - [ ] Household: replace fixed plus-one slots with a **guest allowance** (max people) set by admin
 - [ ] Guest: **personal token** (long, unguessable) for their own QR code
 - [ ] Household: **long token** for the invitation link/QR (keep the short 6-char code as a typed fallback)
 - [ ] Guest: birth year → computed **zodiac** (handle Lunar New Year cutoff)
 - [ ] `Table` model + seat assignment per guest, per event
-- [ ] Hotel/travel info per event (hotel guide)
+- [x] Hotel/travel info per event (hotel guide)
 - [ ] Check-in record: guest, event, time, checked in by (helper)
 - [ ] Gift record: amount (禮金), special zodiac gift given yes/no — **admin/manager only**
 - [ ] Roles: `admin`, `manager`

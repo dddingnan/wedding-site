@@ -25,11 +25,15 @@
   "events": {
     "korea": {
       "title": "한국 결혼식",
-      "place": "장소 추후 안내"
+      "place": "웨스틴 조선 서울"
     },
-    "second": {
-      "title": "두 번째 예식",
-      "place": "장소 추후 안내"
+    "taiwan": {
+      "title": "대만 결혼식",
+      "place": "만다린 오리엔탈 타이베이"
+    },
+    "us": {
+      "title": "미국 결혼식",
+      "place": "볼티모어 카운티 순회법원, 타우슨"
     },
     "time": "{date} · {time}",
     "map": "지도 보기"

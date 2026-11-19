@@ -4,13 +4,13 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Guest, Household, Rsvp
+from app.models import Event, Guest, Household, Rsvp
 from app.schemas import RsvpSubmit
 from app.services.invite_codes import normalize
 
 HOUSEHOLD_LOAD = (
     selectinload(Household.guests).selectinload(Guest.rsvps),
-    selectinload(Household.events),
+    selectinload(Household.events).selectinload(Event.hotels),
 )
 
 

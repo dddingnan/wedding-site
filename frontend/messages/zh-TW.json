@@ -25,11 +25,15 @@
   "events": {
     "korea": {
       "title": "韓國婚禮",
-      "place": "場地資訊即將公布"
+      "place": "首爾威斯汀朝鮮酒店"
     },
-    "second": {
-      "title": "第二場婚宴",
-      "place": "場地資訊即將公布"
+    "taiwan": {
+      "title": "台灣婚禮",
+      "place": "台北文華東方酒店"
+    },
+    "us": {
+      "title": "美國婚禮",
+      "place": "巴爾的摩郡巡迴法院（陶森）"
     },
     "time": "{date} · {time}",
     "map": "開啟地圖"

@@ -173,6 +173,14 @@ export interface components {
             /** Slug */
             slug: string;
             /**
+             * Kind
+             * @default upcoming
+             * @enum {string}
+             */
+            kind: "upcoming" | "memory";
+            /** Theme */
+            theme?: ("gold" | "red") | null;
+            /**
              * Starts At
              * Format: date-time
              */
@@ -188,6 +196,11 @@ export interface components {
             address?: string | null;
             /** Map Url */
             map_url?: string | null;
+            /**
+             * Hotels
+             * @default []
+             */
+            hotels: components["schemas"]["HotelCreate"][];
         };
         /** EventOut */
         EventOut: {
@@ -195,6 +208,13 @@ export interface components {
             id: number;
             /** Slug */
             slug: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "upcoming" | "memory";
+            /** Theme */
+            theme: ("gold" | "red") | null;
             /**
              * Starts At
              * Format: date-time
@@ -208,6 +228,8 @@ export interface components {
             address: string | null;
             /** Map Url */
             map_url: string | null;
+            /** Hotels */
+            hotels: components["schemas"]["HotelOut"][];
         };
         /** EventSummary */
         EventSummary: {
@@ -268,6 +290,40 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** HotelCreate */
+        HotelCreate: {
+            /** Name */
+            name: string;
+            /** Address */
+            address?: string | null;
+            /** Map Url */
+            map_url?: string | null;
+            /** Booking Url */
+            booking_url?: string | null;
+            /** Booking Code */
+            booking_code?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Note */
+            note?: string | null;
+        };
+        /** HotelOut */
+        HotelOut: {
+            /** Name */
+            name: string;
+            /** Address */
+            address: string | null;
+            /** Map Url */
+            map_url: string | null;
+            /** Booking Url */
+            booking_url: string | null;
+            /** Booking Code */
+            booking_code: string | null;
+            /** Phone */
+            phone: string | null;
+            /** Note */
+            note: string | null;
         };
         /** HouseholdAdminOut */
         HouseholdAdminOut: {

@@ -24,7 +24,25 @@
   }
 }
 
+/* Per-event invitation themes (Event.theme in the API). Put data-theme="gold|red"
+   on a wrapper and everything inside picks up that event's accent.
+   Colours are temporary; change them only here. */
+:root {
+  --theme-gold: #d8a124;
+  --theme-red: #a22329;
+}
+[data-theme="gold"] {
+  --accent: var(--theme-gold);
+  --accent-ink: #2c2724; /* white on this gold is too low-contrast to read */
+}
+[data-theme="red"] {
+  --accent: var(--theme-red);
+  --accent-ink: #ffffff;
+}
+
 @theme inline {
+  --color-theme-gold: var(--theme-gold);
+  --color-theme-red: var(--theme-red);
   --color-paper: var(--paper);
   --color-card: var(--card);
   --color-ink: var(--ink);

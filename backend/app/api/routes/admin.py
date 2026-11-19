@@ -6,11 +6,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import DbSession, SettingsDep
 from app.core.security import create_admin_token, require_admin, verify_admin_password
-from app.models import Event, Household
+from app.models import Event, EventHotel, Household
 from app.schemas import (
     AdminLogin,
     EventCreate,
@@ -40,12 +40,16 @@ def login(body: AdminLogin, settings: SettingsDep):
 
 @protected.get("/events", response_model=list[EventOut])
 def list_events(db: DbSession):
-    return db.scalars(select(Event).order_by(Event.starts_at)).all()
+    return db.scalars(
+        select(Event).options(selectinload(Event.hotels)).order_by(Event.starts_at)
+    ).all()
 
 
 @protected.post("/events", response_model=EventOut, status_code=201)
 def create_event(body: EventCreate, db: DbSession):
-    event = Event(**body.model_dump())
+    data = body.model_dump(exclude={"hotels"})
+    hotels = [EventHotel(**h.model_dump(), sort_order=i) for i, h in enumerate(body.hotels)]
+    event = Event(**data, hotels=hotels)
     db.add(event)
     try:
         db.commit()
@@ -96,7 +100,10 @@ def delete_household(household_id: int, db: DbSession):
 @protected.get("/summary", response_model=Summary)
 def summary(db: DbSession):
     households = _all_households(db)
-    events = db.scalars(select(Event).order_by(Event.starts_at)).all()
+    # Memory events (e.g. the US wedding) have no RSVPs, so they'd only add zero rows.
+    events = db.scalars(
+        select(Event).where(Event.kind == "upcoming").order_by(Event.starts_at)
+    ).all()
 
     per_event = []
     for event in events:

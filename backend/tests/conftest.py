@@ -50,14 +50,14 @@ def admin_headers(client):
 def events(client, admin_headers):
     """Two ceremonies, like the real wedding."""
     created = []
-    for slug, starts_at, tz in [
-        ("korea", "2027-12-26T12:00:00+09:00", "Asia/Seoul"),
-        ("second", "2028-01-02T12:00:00-05:00", "America/New_York"),
+    for slug, starts_at, tz, theme in [
+        ("korea", "2027-12-26T12:00:00+09:00", "Asia/Seoul", "gold"),
+        ("taiwan", "2028-01-02T12:00:00+08:00", "Asia/Taipei", "red"),
     ]:
         res = client.post(
             "/api/admin/events",
             headers=admin_headers,
-            json={"slug": slug, "starts_at": starts_at, "timezone": tz},
+            json={"slug": slug, "starts_at": starts_at, "timezone": tz, "theme": theme},
         )
         assert res.status_code == 201
         created.append(res.json())
