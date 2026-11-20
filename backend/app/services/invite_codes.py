@@ -21,3 +21,13 @@ def generate_unique_code(db: Session) -> str:
         exists = db.scalar(select(Household.id).where(Household.invite_code == code))
         if not exists:
             return code
+
+
+# 16 random bytes = 128 bits, 22 URL-safe characters: unguessable, yet short enough
+# to keep the QR code small and easy to scan on a printed card.
+TOKEN_BYTES = 16
+
+
+def generate_token() -> str:
+    """Secret for the invitation link. 128 bits, so collisions never happen in practice."""
+    return secrets.token_urlsafe(TOKEN_BYTES)

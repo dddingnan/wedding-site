@@ -10,8 +10,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import DbSession, SettingsDep
-from app.core.security import create_admin_token, require_admin, verify_admin_password
-from app.models import Event, EventHotel, Household
+from app.core.security import create_admin_token, hash_pin, require_admin, verify_admin_password
+from app.models import Event, EventHotel, Household, User
 from app.schemas import (
     AdminLogin,
     EventAdminOut,
@@ -24,6 +24,9 @@ from app.schemas import (
     Meal,
     Summary,
     Token,
+    UserCreate,
+    UserOut,
+    UserUpdate,
 )
 from app.services.households import (
     build_household,
@@ -31,7 +34,8 @@ from app.services.households import (
     reserved_seats,
     update_household,
 )
-from app.services.rsvp import HOUSEHOLD_LOAD
+from app.services.invite_codes import generate_token
+from app.services.staff import STAFF_LOAD
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 protected = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
@@ -88,11 +92,11 @@ def update_event(event_id: int, body: EventUpdate, db: DbSession):
 
 
 def _all_households(db: Session) -> list[Household]:
-    return list(db.scalars(select(Household).options(*HOUSEHOLD_LOAD).order_by(Household.name)))
+    return list(db.scalars(select(Household).options(*STAFF_LOAD).order_by(Household.name)))
 
 
 def _get_household(db: Session, household_id: int) -> Household:
-    household = db.get(Household, household_id, options=HOUSEHOLD_LOAD)
+    household = db.get(Household, household_id, options=STAFF_LOAD)
     if household is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Not found")
     return household
@@ -114,7 +118,7 @@ def create_household(body: HouseholdCreate, db: DbSession):
     return _get_household(db, household.id)
 
 
-# TODO(roles): managers will also be allowed to call this (to change max_guests).
+# Helpers change max_guests via PUT /staff/households/{id}/max-guests instead.
 @protected.patch("/households/{household_id}", response_model=HouseholdAdminOut)
 def edit_household(household_id: int, body: HouseholdUpdate, db: DbSession):
     household = _get_household(db, household_id)
@@ -124,12 +128,78 @@ def edit_household(household_id: int, body: HouseholdUpdate, db: DbSession):
     return _get_household(db, household_id)
 
 
+@protected.post("/households/{household_id}/rotate-token", response_model=HouseholdAdminOut)
+def rotate_token(household_id: int, db: DbSession):
+    """New invitation link (e.g. the old one was shared too widely). The old link stops
+    working at once and any printed QR must be reprinted; the typed code is unchanged."""
+    household = _get_household(db, household_id)
+    household.invite_token = generate_token()
+    db.commit()
+    return _get_household(db, household_id)
+
+
 @protected.delete("/households/{household_id}", status_code=204)
 def delete_household(household_id: int, db: DbSession):
     household = db.get(Household, household_id)
     if household is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Not found")
     db.delete(household)
+    db.commit()
+
+
+# ---------- Helper accounts (managers) ----------
+
+
+def _get_user(db: Session, user_id: int) -> User:
+    user = db.get(User, user_id)
+    if user is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Not found")
+    return user
+
+
+@protected.get("/users", response_model=list[UserOut])
+def list_users(db: DbSession):
+    return db.scalars(select(User).order_by(User.role, User.name)).all()
+
+
+@protected.post("/users", response_model=UserOut, status_code=201)
+def create_user(body: UserCreate, db: DbSession):
+    user = User(
+        role="manager",
+        name=body.name.strip(),
+        username=body.username.lower(),
+        pin_hash=hash_pin(body.pin),
+    )
+    db.add(user)
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT, "Username already taken") from exc
+    db.refresh(user)
+    return user
+
+
+@protected.patch("/users/{user_id}", response_model=UserOut)
+def update_user(user_id: int, body: UserUpdate, db: DbSession):
+    user = _get_user(db, user_id)
+    changes = body.model_dump(exclude_unset=True)
+    if changes.get("name"):
+        user.name = changes["name"].strip()
+    if changes.get("pin"):
+        user.pin_hash = hash_pin(changes["pin"])
+        user.failed_logins = 0  # a new PIN unlocks the account
+    if changes.get("active") is not None:
+        user.active = changes["active"]  # off = signed out at once
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@protected.delete("/users/{user_id}", status_code=204)
+def delete_user(user_id: int, db: DbSession):
+    """Their check-ins and gifts stay; "by" just shows as unknown. Prefer active=false."""
+    db.delete(_get_user(db, user_id))
     db.commit()
 
 
@@ -154,6 +224,11 @@ def summary(db: DbSession):
         for r in yes:
             meals.update(r.meals)
             zodiacs.update(r.zodiacs)
+        check_ins = [c for h in invited for c in h.check_ins if c.event_id == event.id]
+        gifts = [g for h in invited for g in h.gifts if g.event_id == event.id]
+        zodiac_gifts: Counter[str] = Counter()
+        for g in gifts:
+            zodiac_gifts.update(g.zodiac_gifts)
         per_event.append(
             EventSummary(
                 event_id=event.id,
@@ -167,6 +242,10 @@ def summary(db: DbSession):
                 people_attending=sum(r.party_size for r in yes),
                 meals=dict(meals),
                 zodiacs=dict(zodiacs),
+                households_checked_in=len(check_ins),
+                people_arrived=sum(c.arrived for c in check_ins),
+                gift_total=sum(g.amount for g in gifts),
+                zodiac_gifts_given=dict(zodiac_gifts),
             )
         )
 
@@ -178,30 +257,40 @@ def summary(db: DbSession):
 
 
 @protected.get("/export.csv")
-def export_csv(db: DbSession):
+def export_csv(db: DbSession, settings: SettingsDep):
     meals = list(get_args(Meal))
     zodiacs = sorted({z for e in db.scalars(select(Event)) for z in e.gift_zodiacs})
     buf = io.StringIO()
     writer = csv.writer(buf)
     writer.writerow(
-        ["event", "household", "first_name", "last_name", "invite_code", "language"]
+        ["event", "household", "first_name", "last_name", "invite_code", "invite_url"]
+        + ["language"]
         + ["main_event", "max_guests", "attending", "party_size"]
         + [f"meal_{m}" for m in meals]
         + [f"zodiac_{z}" for z in zodiacs]
         + ["dietary", "note"]
+        + ["arrived", "checked_in_at", "gift_amount"]
+        + [f"zodiac_gift_{z}" for z in zodiacs]
+        + ["gift_note"]
     )
     for h in _all_households(db):
         for event in h.events:
             r = next((r for r in h.rsvps if r.event_id == event.id), None)
+            c = next((c for c in h.check_ins if c.event_id == event.id), None)
+            g = next((g for g in h.gifts if g.event_id == event.id), None)
             attending = "" if r is None else ("yes" if r.attending else "no")
             writer.writerow(
                 [event.slug, h.name, h.contact_first_name or "", h.contact_last_name or ""]
-                + [h.invite_code, h.preferred_language]
+                + [h.invite_code, settings.invite_url(h.invite_token), h.preferred_language]
                 + ["yes" if event.id == h.primary_event_id else "", h.max_guests]
                 + [attending, r.party_size if r else ""]
                 + [r.meals.get(m, 0) if r else "" for m in meals]
                 + [r.zodiacs.get(z, 0) if r else "" for z in zodiacs]
                 + [(r.dietary or "") if r else "", h.note or ""]
+                + [c.arrived if c else "", c.checked_in_at.isoformat() if c else ""]
+                + [g.amount if g else ""]
+                + [g.zodiac_gifts.get(z, 0) if g else "" for z in zodiacs]
+                + [(g.note or "") if g else ""]
             )
     # BOM so Excel opens Chinese/Korean names correctly instead of mojibake.
     content = "﻿" + buf.getvalue()

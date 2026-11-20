@@ -8,13 +8,15 @@ from app.db.base import Base
 from app.models.event import Event, household_events
 
 if TYPE_CHECKING:
+    from app.models.checkin import CheckIn, Gift
     from app.models.rsvp import Rsvp
 
 
 class Household(Base):
     """One invitation, answered as a group (no per-person guest list).
 
-    Guests open it with the code (later: link/QR) printed on their card.
+    Guests open it with the link/QR on their card (`invite_token`), or by typing the
+    short `invite_code` printed next to it.
     """
 
     __tablename__ = "households"
@@ -25,6 +27,8 @@ class Household(Base):
     contact_first_name: Mapped[str | None] = mapped_column(String(100))
     contact_last_name: Mapped[str | None] = mapped_column(String(100))
     invite_code: Mapped[str] = mapped_column(String(32), unique=True, index=True)
+    # Secret in the invitation link/QR (/invite/<token>); also scanned at check-in.
+    invite_token: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     email: Mapped[str | None] = mapped_column(String(320))
     preferred_language: Mapped[str] = mapped_column(String(8), default="en")  # en | zh-TW | ko
     # Most people this household may bring (to each event). Admin/manager can change it,
@@ -43,4 +47,11 @@ class Household(Base):
     # One Rsvp per event this household is invited to.
     rsvps: Mapped[list["Rsvp"]] = relationship(
         back_populates="household", cascade="all, delete-orphan", order_by="Rsvp.event_id"
+    )
+    # Wedding day (admin/manager only). One of each per event, at most.
+    check_ins: Mapped[list["CheckIn"]] = relationship(
+        back_populates="household", cascade="all, delete-orphan", order_by="CheckIn.event_id"
+    )
+    gifts: Mapped[list["Gift"]] = relationship(
+        back_populates="household", cascade="all, delete-orphan", order_by="Gift.event_id"
     )

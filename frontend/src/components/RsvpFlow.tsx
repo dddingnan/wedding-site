@@ -1,7 +1,6 @@
 "use client";
 
 import { useFormatter, useTranslations } from "next-intl";
-import { useSearchParams } from "next/navigation";
 import { useEffect, useEffectEvent, useState } from "react";
 
 import {
@@ -11,6 +10,7 @@ import {
   submitRsvp,
   type EventResponse,
   type Household,
+  type InviteCredential,
   type Meal,
   type WeddingEvent,
   type Zodiac,
@@ -54,28 +54,27 @@ const total = (counts: Partial<Record<string, number>>) =>
 
 const inputClass = "w-full rounded-md border border-line bg-paper px-3 py-2 text-sm";
 
-export function RsvpFlow() {
+/**
+ * With `token` (from the /invite/<token> link or QR) the invitation opens straight away;
+ * without it, the guest types the short code from their card.
+ */
+export function RsvpFlow({ token }: { token?: string }) {
   const t = useTranslations("rsvp");
   const tMeals = useTranslations("meals");
   const tZodiac = useTranslations("zodiac");
   const format = useFormatter();
   const eventTitle = useEventTitle();
-  const searchParams = useSearchParams();
-
-  // A QR code on the printed card can link straight to /rsvp?code=AB3K9Q.
-  const [codeFromUrl] = useState(() => searchParams.get("code"));
-  const [code, setCode] = useState(codeFromUrl ?? "");
+  const [code, setCode] = useState("");
+  const credential: InviteCredential = token ? { token } : { code };
   const [household, setHousehold] = useState<Household | null>(null);
   const [answers, setAnswers] = useState<Record<number, Answer>>({});
   const [note, setNote] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "saved">(
-    codeFromUrl ? "loading" : "idle",
-  );
+  const [status, setStatus] = useState<"idle" | "loading" | "saved">(token ? "loading" : "idle");
   const [error, setError] = useState<string | null>(null);
 
   const errorMessage = (e: unknown) =>
     e instanceof ApiError && e.status === 404
-      ? t("notFound")
+      ? t(token ? "linkNotFound" : "notFound")
       : e instanceof ApiError && e.status === 429
         ? t("tooMany")
         : t("error");
@@ -98,23 +97,23 @@ export function RsvpFlow() {
   function find() {
     setError(null);
     setStatus("loading");
-    lookupInvite(code).then(
+    lookupInvite({ code }).then(
       (h) => onLookupResult({ h }),
       (err) => onLookupResult({ err }),
     );
   }
 
   useEffect(() => {
-    if (!codeFromUrl) return;
+    if (!token) return;
     let cancelled = false;
-    lookupInvite(codeFromUrl).then(
+    lookupInvite({ token }).then(
       (h) => !cancelled && onAutoLookupResult({ h }),
       (err) => !cancelled && onAutoLookupResult({ err }),
     );
     return () => {
       cancelled = true;
     };
-  }, [codeFromUrl]);
+  }, [token]);
 
   const answerFor = (eventId: number) => answers[eventId] ?? emptyAnswer;
 
@@ -161,7 +160,7 @@ export function RsvpFlow() {
     setError(null);
     setStatus("loading");
     try {
-      const saved = await submitRsvp(code, {
+      const saved = await submitRsvp(credential, {
         note: note || null,
         responses: household.events.map(toResponse),
       });
@@ -176,6 +175,18 @@ export function RsvpFlow() {
 
   // ---------- Step 1: enter code ----------
   if (!household) {
+    if (token) {
+      // Opened from a link: no code box, just loading or why the link didn't work.
+      return (
+        <div className="border-line bg-card mx-auto max-w-sm rounded-xl border p-6 text-center">
+          {error ? (
+            <p className="text-danger text-sm">{error}</p>
+          ) : (
+            <p className="text-muted text-sm">{t("finding")}</p>
+          )}
+        </div>
+      );
+    }
     return (
       <form
         onSubmit={(e) => {

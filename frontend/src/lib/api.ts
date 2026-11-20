@@ -54,13 +54,17 @@ async function request<T>(path: string, init: RequestInit & { token?: string } =
 
 // ---------- Guests ----------
 
-export const lookupInvite = (code: string) =>
-  request<Household>("/invites/lookup", { method: "POST", body: JSON.stringify({ code }) });
+/** Who's answering: the token from the invitation link/QR, or the short typed code.
+ *  Always sent in the request body, never the API URL, so it stays out of server logs. */
+export type InviteCredential = { token: string } | { code: string };
 
-export const submitRsvp = (code: string, body: RsvpSubmit) =>
-  request<Household>(`/invites/${encodeURIComponent(code)}/rsvp`, {
+export const lookupInvite = (cred: InviteCredential) =>
+  request<Household>("/invites/lookup", { method: "POST", body: JSON.stringify(cred) });
+
+export const submitRsvp = (cred: InviteCredential, body: Omit<RsvpSubmit, "token" | "code">) =>
+  request<Household>("/invites/rsvp", {
     method: "PUT",
-    body: JSON.stringify(body),
+    body: JSON.stringify({ ...body, ...cred }),
   });
 
 // ---------- Admin ----------
@@ -87,6 +91,9 @@ export const admin = (token: string) => ({
       body: JSON.stringify(body),
       token,
     }),
+  /** New invitation link; the old one stops working (the typed code stays the same). */
+  rotateToken: (id: number) =>
+    request<HouseholdAdmin>(`/admin/households/${id}/rotate-token`, { method: "POST", token }),
   deleteHousehold: (id: number) =>
     request<void>(`/admin/households/${id}`, { method: "DELETE", token }),
   exportCsv: async () => {

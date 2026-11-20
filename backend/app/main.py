@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from app.api.routes import admin, health, invites
+from app.api.routes import admin, health, invites, staff
 from app.core.config import get_settings
 from app.core.limiter import limiter
 
@@ -27,6 +27,8 @@ def create_app() -> FastAPI:
     app.include_router(invites.router, prefix="/api")
     app.include_router(admin.router, prefix="/api")
     app.include_router(admin.protected, prefix="/api")
+    app.include_router(staff.router, prefix="/api")
+    app.include_router(staff.protected, prefix="/api")
     return app
 
 

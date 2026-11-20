@@ -5,6 +5,7 @@ os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["ADMIN_PASSWORD"] = "test-password"
 os.environ["JWT_SECRET"] = "test-secret-at-least-32-bytes-long!!"
 os.environ["INVITE_LOOKUP_RATE_LIMIT"] = "1000/minute"
+os.environ["STAFF_LOGIN_RATE_LIMIT"] = "1000/minute"
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

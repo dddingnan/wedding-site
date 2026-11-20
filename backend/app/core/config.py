@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     # Comma-separated list, e.g. "http://localhost:3000,https://our-wedding.com"
     cors_origins: str = "http://localhost:3000"
     invite_lookup_rate_limit: str = "10/minute"
+    staff_login_rate_limit: str = "10/minute"
+    # Public frontend address, used to build invitation links (SITE_URL/invite/<token>).
+    site_url: str = "http://localhost:3000"
 
     @field_validator("database_url")
     @classmethod
@@ -25,6 +28,9 @@ class Settings(BaseSettings):
             if v.startswith(prefix):
                 return "postgresql+psycopg://" + v[len(prefix) :]
         return v
+
+    def invite_url(self, token: str) -> str:
+        return f"{self.site_url.rstrip('/')}/invite/{token}"
 
     @property
     def cors_origin_list(self) -> list[str]:

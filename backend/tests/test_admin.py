@@ -58,7 +58,7 @@ def test_edit_household(client, admin_headers, household, events):
 
 def test_cannot_lower_max_below_rsvp(client, admin_headers, household, events):
     answer = {"event_id": events[0]["id"], "attending": True, "party_size": 3, "meals": {"fish": 3}}
-    client.put(f"/api/invites/{household['invite_code']}/rsvp", json={"responses": [answer]})
+    client.put("/api/invites/rsvp", json={"code": household["invite_code"], "responses": [answer]})
     res = client.patch(
         f"/api/admin/households/{household['id']}", headers=admin_headers, json={"max_guests": 2}
     )
@@ -74,7 +74,7 @@ def test_summary_and_export(client, admin_headers, household, events):
         "meals": {"fish": 1, "kids": 1},
         "zodiacs": {"rat": 1},
     }
-    client.put(f"/api/invites/{household['invite_code']}/rsvp", json={"responses": [answer]})
+    client.put("/api/invites/rsvp", json={"code": household["invite_code"], "responses": [answer]})
 
     s = client.get("/api/admin/summary", headers=admin_headers).json()
     assert s["households"] == 1
@@ -91,13 +91,18 @@ def test_summary_and_export(client, admin_headers, household, events):
         "people_attending": 2,
         "meals": {"fish": 1, "kids": 1},
         "zodiacs": {"rat": 1},
+        "households_checked_in": 0,
+        "people_arrived": 0,
+        "gift_total": 0,
+        "zodiac_gifts_given": {},
     }
     assert s["events"][1]["households_awaiting"] == 1
 
     res = client.get("/api/admin/export.csv", headers=admin_headers)
     assert res.status_code == 200
     lines = res.text.strip().splitlines()
-    assert lines[0].startswith("﻿event,household,first_name,last_name,")
+    assert lines[0].startswith("﻿event,household,first_name,last_name,invite_code,invite_url,")
+    assert household["invite_url"] in lines[1]
     assert "zodiac_dragon" in lines[0] and "zodiac_rooster" in lines[0]
     assert "Kim Family,Minji,Kim" in res.text
     assert len(lines) == 1 + 2  # header + 1 household x 2 events

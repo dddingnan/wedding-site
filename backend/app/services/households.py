@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Event, Household, household_events
 from app.schemas import HouseholdCreate, HouseholdUpdate
-from app.services.invite_codes import generate_unique_code, normalize
+from app.services.invite_codes import generate_token, generate_unique_code, normalize
 
 
 def _event_by_slug(db: Session, slug: str) -> Event:
@@ -68,6 +68,7 @@ def build_household(db: Session, body: HouseholdCreate) -> Household:
         email=body.email,
         preferred_language=body.preferred_language,
         invite_code=normalize(body.invite_code) if body.invite_code else generate_unique_code(db),
+        invite_token=generate_token(),
         max_guests=body.max_guests,
         primary_event=main,
         events=events,

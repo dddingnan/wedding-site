@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models import Event, Household, Rsvp
-from app.schemas import EventResponse, RsvpSubmit
+from app.schemas import EventResponse, InviteCredential, RsvpSubmit
 from app.services.invite_codes import normalize
 
 HOUSEHOLD_LOAD = (
@@ -14,10 +14,13 @@ HOUSEHOLD_LOAD = (
 )
 
 
-def get_household_by_code(db: Session, code: str) -> Household:
-    household = db.scalar(
-        select(Household).where(Household.invite_code == normalize(code)).options(*HOUSEHOLD_LOAD)
-    )
+def get_household(db: Session, cred: InviteCredential) -> Household:
+    if cred.token is not None:
+        # Tokens are case-sensitive and copied by machine (link/QR), so no normalizing.
+        match = Household.invite_token == cred.token.strip()
+    else:
+        match = Household.invite_code == normalize(cred.code or "")
+    household = db.scalar(select(Household).where(match).options(*HOUSEHOLD_LOAD))
     if household is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Invitation not found")
     return household
@@ -42,13 +45,13 @@ def _validate(resp: EventResponse, event: Event, max_guests: int) -> None:
             raise _invalid(f"{event.slug}: more {animal} than people coming")
 
 
-def submit_rsvp(db: Session, code: str, payload: RsvpSubmit) -> Household:
-    household = get_household_by_code(db, code)
+def submit_rsvp(db: Session, payload: RsvpSubmit) -> Household:
+    household = get_household(db, payload)
     events_by_id = {e.id: e for e in household.events}
 
     for resp in payload.responses:
         event = events_by_id.get(resp.event_id)
-        # Reject other event IDs so one code can't answer for an event it isn't invited to.
+        # Reject other event IDs so one invitation can't answer for an event it isn't invited to.
         if event is None:
             raise _invalid(f"This invitation does not include event {resp.event_id}")
         _validate(resp, event, household.max_guests)
@@ -68,4 +71,4 @@ def submit_rsvp(db: Session, code: str, payload: RsvpSubmit) -> Household:
     household.responded_at = datetime.now(UTC)
     db.commit()
     db.expire_all()
-    return get_household_by_code(db, code)
+    return get_household(db, payload)

@@ -4,7 +4,9 @@ from tests.conftest import make_household
 
 
 def rsvp(client, code, *responses, note=None):
-    return client.put(f"/api/invites/{code}/rsvp", json={"responses": responses, "note": note})
+    """Answer by typed code (the token path is covered in test_invite_token.py)."""
+    body = {"code": code, "responses": responses, "note": note}
+    return client.put("/api/invites/rsvp", json=body)
 
 
 def yes(event, party_size, meals, zodiacs=None, dietary=None):
@@ -45,7 +47,8 @@ def test_lookup_is_case_and_dash_insensitive(client, household, events):
     assert body["primary_event_id"] == events[0]["id"]
     assert [e["slug"] for e in body["events"]] == ["korea", "taiwan"]  # sorted by date
     assert body["events"][0]["gift_zodiacs"] == ["rooster", "rat"]
-    assert "invite_code" not in body  # guests never see admin fields
+    # Guests never see admin fields (or the token: they already have it).
+    assert not {"invite_code", "invite_token", "invite_url"} & body.keys()
     assert "capacity" not in body["events"][0]
 
 

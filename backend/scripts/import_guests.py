@@ -19,7 +19,7 @@ CSV columns (header row required):
     invite_code   optional; generated when blank
 
 All rows are saved together or not at all (e.g. if an event would go over capacity).
-Prints each household with its invite code so you can print the cards.
+Prints each household with its invite code and link (for the QR) so you can print the cards.
 """
 
 import csv
@@ -27,6 +27,7 @@ import sys
 
 from fastapi import HTTPException
 
+from app.core.config import get_settings
 from app.db.session import SessionLocal
 from app.schemas import HouseholdCreate
 from app.services.households import build_household
@@ -60,6 +61,7 @@ def main(path: str) -> None:
                 sys.exit(f"line {line} ({body.name}): {exc.detail}. Nothing was imported.")
             slugs = ",".join(e.slug for e in household.events)
             print(f"{household.invite_code}  {household.name}  (max {body.max_guests}; {slugs})")
+            print(f"        {get_settings().invite_url(household.invite_token)}")
         db.commit()
 
 

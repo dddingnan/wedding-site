@@ -15,6 +15,8 @@
 | Language | Browser language first (`ko`, `zh-*`); otherwise by country (KR → 한국어, TW → 繁體中文); everyone else → English |
 | Check-in staff | **Family helpers** → need a "manager" role, separate from admin |
 | Admin login | Google login, allowlist of our two accounts |
+| Helper login | **Username + PIN** (6–8 digits), accounts created by admin; locks after 10 wrong PINs |
+| Gift money | **One amount per household per event** (event's local currency) + a note |
 | Photos | Start in `frontend/public/` (Vercel CDN, free); move to Cloudflare R2 only if the gallery gets big. Not S3 |
 
 ## Open questions
@@ -42,20 +44,21 @@
 - [x] Household: replace fixed plus-one slots with a **max people** set by admin/manager, capped by event **capacity**
 - [x] Household: contact first/last name; **main event** + optional other event
 - [x] RSVP per household per event: party size, meal counts, zodiac counts (no per-person guests)
-- [ ] Household: **long token** for the invitation link/QR (keep the short 6-char code as a typed fallback)
+- [x] Household: **long token** for the invitation link/QR (keep the short 6-char code as a typed fallback)
 - [x] Zodiac: event `gift_zodiacs`; RSVP asks how many people per gift animal (no birth year)
 - [ ] `Table` model + seat assignment per household, per event
 - [x] Hotel/travel info per event (hotel guide)
-- [ ] Check-in record: household, event, how many arrived, time, checked in by (helper)
-- [ ] Gift record: amount (禮金), zodiac gifts given (how many) — **admin/manager only**
-- [ ] Roles: `admin`, `manager`
+- [x] Check-in record: household, event, how many arrived, time, checked in by (helper)
+- [x] Gift record: amount (禮金), zodiac gifts given (how many) — **admin/manager only**
+- [x] Roles: `admin`, `manager` (`users` table; admins still use ADMIN_PASSWORD until Google login)
 - [x] Alembic migration + tests (events, households/RSVP)
-- [ ] Alembic migration + tests (tables, check-in, gifts, roles)
+- [x] Alembic migration + tests (check-in, gifts, roles)
+- [ ] Alembic migration + tests (tables)
 
 ## Phase 2 — Invite flow
 
 - [ ] Generate household link + QR code from admin page (printable / downloadable for the paper invitation)
-- [ ] Link opens straight into that household's invitation — no typing
+- [x] Link opens straight into that household's invitation — no typing (`/invite/<token>`)
 - [ ] Remove the public invite-code-only entry; keep a small "have a code?" fallback
 - [ ] Public home page shows **no private event details**; details only after the link identifies the guest
 
@@ -87,12 +90,12 @@
 - [x] Set max people per household (basic: number field in the invitations table)
 - [ ] Seating: create tables, assign households per event
 - [ ] Generate / reprint QR codes
-- [ ] Manage helper (manager) accounts
+- [ ] Manage helper (manager) accounts — API done (`/api/admin/users`), page still to build
 - [ ] Headcount, meals, zodiac gift list per event; CSV export
 
 ## Phase 6 — Manager flow (day of the wedding, family helpers)
 
-- [ ] Simple helper login (limited access: check-in, gifts, change a household's max people)
+- [ ] Simple helper login (limited access: check-in, gifts, change a household's max people) — API done (`/api/staff/*`), screens still to build
 - [ ] Check-in way 1: scan the household QR → enter how many arrived → done
 - [ ] Check-in way 2: helper searches the household by name and checks them in (search only inside the helper screen, never public)
 - [ ] Show table number on check-in so the helper can direct them

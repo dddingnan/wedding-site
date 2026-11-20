@@ -46,6 +46,7 @@
     "find": "Find my invitation",
     "finding": "Looking…",
     "notFound": "We couldn't find that code. Please check it and try again.",
+    "linkNotFound": "This invitation link doesn't work any more. Please contact us and we'll send you a new one.",
     "tooMany": "Too many attempts. Please wait a minute and try again.",
     "error": "Something went wrong. Please try again.",
     "greeting": "Welcome, {name}!",

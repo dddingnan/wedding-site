@@ -38,7 +38,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/invites/{code}/rsvp": {
+    "/api/invites/rsvp": {
         parameters: {
             query?: never;
             header?: never;
@@ -47,7 +47,7 @@ export interface paths {
         };
         get?: never;
         /** Submit Rsvp */
-        put: operations["submit_rsvp_api_invites__code__rsvp_put"];
+        put: operations["submit_rsvp_api_invites_rsvp_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -143,6 +143,66 @@ export interface paths {
         patch: operations["edit_household_api_admin_households__household_id__patch"];
         trace?: never;
     };
+    "/api/admin/households/{household_id}/rotate-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rotate Token
+         * @description New invitation link (e.g. the old one was shared too widely). The old link stops
+         *     working at once and any printed QR must be reprinted; the typed code is unchanged.
+         */
+        post: operations["rotate_token_api_admin_households__household_id__rotate_token_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Users */
+        get: operations["list_users_api_admin_users_get"];
+        put?: never;
+        /** Create User */
+        post: operations["create_user_api_admin_users_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete User
+         * @description Their check-ins and gifts stay; "by" just shows as unknown. Prefer active=false.
+         */
+        delete: operations["delete_user_api_admin_users__user_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update User */
+        patch: operations["update_user_api_admin_users__user_id__patch"];
+        trace?: never;
+    };
     "/api/admin/summary": {
         parameters: {
             query?: never;
@@ -177,6 +237,148 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/staff/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Login */
+        post: operations["login_api_staff_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/staff/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Me */
+        get: operations["me_api_staff_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/staff/scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Scan */
+        post: operations["scan_api_staff_scan_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/staff/households": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search */
+        get: operations["search_api_staff_households_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/staff/households/{household_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Household */
+        get: operations["get_household_api_staff_households__household_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/staff/households/{household_id}/check-ins/{event_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Check In */
+        put: operations["check_in_api_staff_households__household_id__check_ins__event_id__put"];
+        post?: never;
+        /** Undo Check In */
+        delete: operations["undo_check_in_api_staff_households__household_id__check_ins__event_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/staff/households/{household_id}/gifts/{event_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Record Gift */
+        put: operations["record_gift_api_staff_households__household_id__gifts__event_id__put"];
+        post?: never;
+        /** Clear Gift */
+        delete: operations["clear_gift_api_staff_households__household_id__gifts__event_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/staff/households/{household_id}/max-guests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Max Guests
+         * @description The one household setting helpers may change (e.g. an extra person turned up).
+         *     Same rules as admin: not below their RSVP, not over the event's capacity.
+         */
+        put: operations["set_max_guests_api_staff_households__household_id__max_guests_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -185,6 +387,25 @@ export interface components {
         AdminLogin: {
             /** Password */
             password: string;
+        };
+        /** CheckInOut */
+        CheckInOut: {
+            /** Event Id */
+            event_id: number;
+            /** Arrived */
+            arrived: number;
+            /**
+             * Checked In At
+             * Format: date-time
+             */
+            checked_in_at: string;
+            /** Checked In By Name */
+            checked_in_by_name: string | null;
+        };
+        /** CheckInSet */
+        CheckInSet: {
+            /** Arrived */
+            arrived: number;
         };
         /** EventAdminOut */
         EventAdminOut: {
@@ -350,6 +571,16 @@ export interface components {
             zodiacs: {
                 [key: string]: number;
             };
+            /** Households Checked In */
+            households_checked_in: number;
+            /** People Arrived */
+            people_arrived: number;
+            /** Gift Total */
+            gift_total: number;
+            /** Zodiac Gifts Given */
+            zodiac_gifts_given: {
+                [key: string]: number;
+            };
         };
         /**
          * EventUpdate
@@ -360,6 +591,43 @@ export interface components {
             capacity?: number | null;
             /** Gift Zodiacs */
             gift_zodiacs?: ("rat" | "ox" | "tiger" | "rabbit" | "dragon" | "snake" | "horse" | "goat" | "monkey" | "rooster" | "dog" | "pig")[] | null;
+        };
+        /** GiftOut */
+        GiftOut: {
+            /** Event Id */
+            event_id: number;
+            /** Amount */
+            amount: number;
+            /** Zodiac Gifts */
+            zodiac_gifts: {
+                [key: string]: number;
+            };
+            /** Note */
+            note: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Recorded By Name */
+            recorded_by_name: string | null;
+        };
+        /** GiftSet */
+        GiftSet: {
+            /**
+             * Amount
+             * @default 0
+             */
+            amount: number;
+            /**
+             * Zodiac Gifts
+             * @default {}
+             */
+            zodiac_gifts: {
+                [key: string]: number;
+            };
+            /** Note */
+            note?: string | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -427,10 +695,21 @@ export interface components {
             rsvps: components["schemas"]["RsvpOut"][];
             /** Id */
             id: number;
+            /** Check Ins */
+            check_ins: components["schemas"]["CheckInOut"][];
+            /** Gifts */
+            gifts: components["schemas"]["GiftOut"][];
             /** Invite Code */
             invite_code: string;
+            /** Invite Token */
+            invite_token: string;
             /** Email */
             email: string | null;
+            /**
+             * Invite Url
+             * @description Full link for the card/QR, built from SITE_URL.
+             */
+            readonly invite_url: string;
         };
         /** HouseholdCreate */
         HouseholdCreate: {
@@ -513,8 +792,25 @@ export interface components {
         };
         /** InviteLookup */
         InviteLookup: {
+            /** Token */
+            token?: string | null;
             /** Code */
-            code: string;
+            code?: string | null;
+        };
+        /** MaxGuestsSet */
+        MaxGuestsSet: {
+            /** Max Guests */
+            max_guests: number;
+        };
+        /** Me */
+        Me: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "admin" | "manager";
+            /** Name */
+            name: string;
         };
         /** RsvpOut */
         RsvpOut: {
@@ -537,10 +833,92 @@ export interface components {
         };
         /** RsvpSubmit */
         RsvpSubmit: {
+            /** Token */
+            token?: string | null;
+            /** Code */
+            code?: string | null;
             /** Responses */
             responses: components["schemas"]["EventResponse"][];
             /** Note */
             note?: string | null;
+        };
+        /** ScanBody */
+        ScanBody: {
+            /** Token */
+            token: string;
+        };
+        /**
+         * StaffHouseholdBrief
+         * @description Search result row; open the household for the rest.
+         */
+        StaffHouseholdBrief: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Contact First Name */
+            contact_first_name: string | null;
+            /** Contact Last Name */
+            contact_last_name: string | null;
+        };
+        /**
+         * StaffHouseholdOut
+         * @description What a helper sees after scanning a QR or searching: RSVP + wedding-day records.
+         */
+        StaffHouseholdOut: {
+            /** Name */
+            name: string;
+            /** Contact First Name */
+            contact_first_name: string | null;
+            /** Contact Last Name */
+            contact_last_name: string | null;
+            /**
+             * Preferred Language
+             * @enum {string}
+             */
+            preferred_language: "en" | "zh-TW" | "ko";
+            /** Max Guests */
+            max_guests: number;
+            /** Primary Event Id */
+            primary_event_id: number | null;
+            /** Note */
+            note: string | null;
+            /** Responded At */
+            responded_at: string | null;
+            /** Events */
+            events: components["schemas"]["EventOut"][];
+            /** Rsvps */
+            rsvps: components["schemas"]["RsvpOut"][];
+            /** Id */
+            id: number;
+            /** Check Ins */
+            check_ins: components["schemas"]["CheckInOut"][];
+            /** Gifts */
+            gifts: components["schemas"]["GiftOut"][];
+        };
+        /** StaffLogin */
+        StaffLogin: {
+            /** Username */
+            username: string;
+            /** Pin */
+            pin: string;
+        };
+        /** StaffToken */
+        StaffToken: {
+            /** Access Token */
+            access_token: string;
+            /**
+             * Token Type
+             * @default bearer
+             */
+            token_type: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "admin" | "manager";
+            /** Name */
+            name: string;
         };
         /** Summary */
         Summary: {
@@ -560,6 +938,56 @@ export interface components {
              * @default bearer
              */
             token_type: string;
+        };
+        /**
+         * UserCreate
+         * @description A family helper (manager). Admins will sign in with Google instead.
+         */
+        UserCreate: {
+            /** Name */
+            name: string;
+            /** Username */
+            username: string;
+            /**
+             * Pin
+             * @example 482913
+             */
+            pin: string;
+        };
+        /** UserOut */
+        UserOut: {
+            /** Id */
+            id: number;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "admin" | "manager";
+            /** Name */
+            name: string;
+            /** Username */
+            username: string | null;
+            /** Active */
+            active: boolean;
+            /** Locked */
+            locked: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * UserUpdate
+         * @description Fields left out are unchanged. Setting a new PIN also unlocks the account.
+         */
+        UserUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Pin */
+            pin?: string | null;
+            /** Active */
+            active?: boolean | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -638,13 +1066,11 @@ export interface operations {
             };
         };
     };
-    submit_rsvp_api_invites__code__rsvp_put: {
+    submit_rsvp_api_invites_rsvp_put: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                code: string;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -911,6 +1337,154 @@ export interface operations {
             };
         };
     };
+    rotate_token_api_admin_households__household_id__rotate_token_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                household_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HouseholdAdminOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_users_api_admin_users_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOut"][];
+                };
+            };
+        };
+    };
+    create_user_api_admin_users_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_user_api_admin_users__user_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_user_api_admin_users__user_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     summary_api_admin_summary_get: {
         parameters: {
             query?: never;
@@ -947,6 +1521,325 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    login_api_staff_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffLogin"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffToken"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    me_api_staff_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+        };
+    };
+    scan_api_staff_scan_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScanBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffHouseholdOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_api_staff_households_get: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffHouseholdBrief"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_household_api_staff_households__household_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                household_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffHouseholdOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    check_in_api_staff_households__household_id__check_ins__event_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                household_id: number;
+                event_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckInSet"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffHouseholdOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    undo_check_in_api_staff_households__household_id__check_ins__event_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                household_id: number;
+                event_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffHouseholdOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_gift_api_staff_households__household_id__gifts__event_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                household_id: number;
+                event_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GiftSet"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffHouseholdOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    clear_gift_api_staff_households__household_id__gifts__event_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                household_id: number;
+                event_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffHouseholdOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_max_guests_api_staff_households__household_id__max_guests_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                household_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaxGuestsSet"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffHouseholdOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -28,6 +28,7 @@ export function AdminDashboard() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<Data | null>(null);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
   // Bump to refetch after a change (add/edit/delete).
   const [version, setVersion] = useState(0);
   const reload = () => setVersion((v) => v + 1);
@@ -80,6 +81,33 @@ export function AdminDashboard() {
   async function remove(h: HouseholdAdmin) {
     if (!token || !confirm(`Delete "${h.name}" and all their RSVPs?`)) return;
     await admin(token).deleteHousehold(h.id);
+    reload();
+  }
+
+  async function copyLink(h: HouseholdAdmin) {
+    try {
+      await navigator.clipboard.writeText(h.invite_url);
+      setCopiedId(h.id);
+      setTimeout(() => setCopiedId((id) => (id === h.id ? null : id)), 2000);
+    } catch {
+      // Clipboard blocked (e.g. not https): let us copy it by hand.
+      prompt(`Invitation link for ${h.name}`, h.invite_url);
+    }
+  }
+
+  async function newLink(h: HouseholdAdmin) {
+    const ok = confirm(
+      `Make a new link for "${h.name}"?
+
+The old link and any printed QR code stop working. ` + "Their typed code stays the same.",
+    );
+    if (!token || !ok) return;
+    setError(null);
+    try {
+      await admin(token).rotateToken(h.id);
+    } catch (err) {
+      setError(`${h.name}: ${err instanceof ApiError ? err.message : String(err)}`);
+    }
     reload();
   }
 
@@ -186,7 +214,7 @@ export function AdminDashboard() {
             <thead className="border-line text-muted border-b text-xs uppercase">
               <tr>
                 <th className="p-3">Household</th>
-                <th className="p-3">Code</th>
+                <th className="p-3">Code / link</th>
                 <th className="p-3">Lang</th>
                 <th className="p-3">Max</th>
                 <th className="p-3">RSVP (★ = main event)</th>
@@ -205,7 +233,21 @@ export function AdminDashboard() {
                     )}
                     {h.note && <p className="text-muted mt-1 text-xs italic">“{h.note}”</p>}
                   </td>
-                  <td className="p-3 font-mono">{h.invite_code}</td>
+                  <td className="p-3">
+                    <p className="font-mono">{h.invite_code}</p>
+                    <div className="mt-1 flex gap-3 text-xs">
+                      <button
+                        onClick={() => copyLink(h)}
+                        className="text-accent hover:underline"
+                        title={h.invite_url}
+                      >
+                        {copiedId === h.id ? "Copied ✓" : "Copy link"}
+                      </button>
+                      <button onClick={() => newLink(h)} className="text-muted hover:underline">
+                        New link
+                      </button>
+                    </div>
+                  </td>
                   <td className="p-3">{h.preferred_language}</td>
                   <td className="p-3">
                     <input
